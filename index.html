@@ -1,0 +1,2052 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>단어 암기 앱</title>
+  <style>
+    :root {
+      --bg: #f7fbff;
+      --panel: #ffffff;
+      --ink: #172033;
+      --muted: #657189;
+      --blue: #2f80ed;
+      --blue-soft: #e8f2ff;
+      --green: #24a865;
+      --green-soft: #e8f8ef;
+      --red: #e24b4b;
+      --red-soft: #fff0f0;
+      --yellow: #ffc857;
+      --line: #dbe6f3;
+      --shadow: 0 14px 40px rgba(36, 86, 138, 0.12);
+      --radius: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+      letter-spacing: 0;
+    }
+
+    body {
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+
+    button, input, select {
+      font: inherit;
+    }
+
+    button {
+      min-height: 60px;
+      border: 0;
+      border-radius: var(--radius);
+      padding: 14px 22px;
+      color: #fff;
+      background: var(--blue);
+      font-size: 20px;
+      font-weight: 800;
+      cursor: pointer;
+      touch-action: manipulation;
+      box-shadow: 0 8px 20px rgba(47, 128, 237, 0.18);
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    button:disabled {
+      opacity: 0.48;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    input, select {
+      width: 100%;
+      min-height: 60px;
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      color: var(--ink);
+      padding: 13px 16px;
+      font-size: 20px;
+      outline: none;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 4px rgba(47, 128, 237, 0.12);
+    }
+
+    .app {
+      width: min(100%, 980px);
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 22px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    h1, h2, h3, p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(32px, 5vw, 48px);
+      line-height: 1.08;
+    }
+
+    h2 {
+      font-size: clamp(25px, 3.5vw, 34px);
+      line-height: 1.2;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 18px;
+    }
+
+    .screen {
+      display: none;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 16px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .actions > button {
+      flex: 1 1 220px;
+    }
+
+    .backup-status {
+      min-height: 32px;
+      color: var(--muted);
+      font-size: 16px;
+      font-weight: 800;
+    }
+
+    .secondary {
+      background: #6b7890;
+      box-shadow: 0 8px 20px rgba(80, 91, 112, 0.15);
+    }
+
+    .success {
+      background: var(--green);
+      box-shadow: 0 8px 20px rgba(36, 168, 101, 0.18);
+    }
+
+    .danger {
+      background: var(--red);
+      box-shadow: 0 8px 20px rgba(226, 75, 75, 0.18);
+    }
+
+    .ghost {
+      background: #fff;
+      color: var(--blue);
+      border: 2px solid var(--blue);
+      box-shadow: none;
+    }
+
+    .day-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .day-item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 18px;
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      color: var(--ink);
+      text-align: left;
+      box-shadow: none;
+    }
+
+    .day-item.selected {
+      border-color: var(--blue);
+      background: var(--blue-soft);
+    }
+
+    .day-title {
+      font-size: 24px;
+      font-weight: 900;
+    }
+
+    .status-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--muted);
+      background: #eef3f8;
+    }
+
+    .badge.done {
+      color: #0c7545;
+      background: var(--green-soft);
+    }
+
+    .stage-bar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin: 14px 0 18px;
+    }
+
+    .stage-pill {
+      min-height: 48px;
+      display: grid;
+      place-items: center;
+      border-radius: var(--radius);
+      background: #edf3fa;
+      color: var(--muted);
+      font-size: 17px;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .stage-pill.active {
+      background: var(--blue);
+      color: #fff;
+    }
+
+    .stage-pill.done {
+      background: var(--green);
+      color: #fff;
+    }
+
+    .manager-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 12px;
+      align-items: end;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--muted);
+      font-size: 16px;
+      font-weight: 800;
+    }
+
+    .day-controls {
+      display: grid;
+      grid-template-columns: minmax(150px, 0.42fr) 1fr;
+      gap: 12px;
+    }
+
+    .word-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .word-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 10px;
+      align-items: center;
+      min-height: 70px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fbfdff;
+    }
+
+    .word-row strong {
+      font-size: 21px;
+    }
+
+    .word-row span {
+      font-size: 20px;
+      color: var(--muted);
+    }
+
+    .word-row button {
+      min-width: 90px;
+      min-height: 54px;
+      font-size: 17px;
+      padding: 10px 14px;
+    }
+
+    .correction-row {
+      grid-template-columns: minmax(0, 1fr) minmax(170px, 0.55fr) minmax(220px, 0.75fr);
+    }
+
+    .correction-row input {
+      width: 100%;
+    }
+
+    .copy-feedback {
+      width: 100%;
+      min-height: 48px;
+      display: grid;
+      align-items: center;
+      color: #a31f1f;
+      font-size: 18px;
+      font-weight: 850;
+    }
+
+    .study-wrap {
+      display: grid;
+      gap: 18px;
+    }
+
+    .study-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .nav-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .nav-actions button {
+      min-height: 56px;
+      font-size: 18px;
+      padding: 12px 16px;
+    }
+
+    .progress-track {
+      height: 14px;
+      border-radius: 999px;
+      background: #e7eef7;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      width: 0%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--blue), var(--green));
+      transition: width 220ms ease;
+    }
+
+    .flashcard-scene {
+      perspective: 1200px;
+      min-height: 440px;
+    }
+
+    .flashcard {
+      position: relative;
+      width: 100%;
+      min-height: 440px;
+      border: 0;
+      border-radius: var(--radius);
+      background: transparent;
+      color: var(--ink);
+      box-shadow: none;
+      padding: 0;
+      transform-style: preserve-3d;
+      transition: transform 420ms ease;
+      cursor: pointer;
+    }
+
+    .flashcard.flipped {
+      transform: rotateY(180deg);
+    }
+
+    .card-face {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      backface-visibility: hidden;
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      box-shadow: var(--shadow);
+      padding: 28px;
+      text-align: center;
+      overflow-y: auto;
+    }
+
+    .card-face > div {
+      width: 100%;
+    }
+
+    .card-front {
+      background: linear-gradient(180deg, #ffffff 0%, #eef7ff 100%);
+    }
+
+    .card-back {
+      transform: rotateY(180deg);
+      background: linear-gradient(180deg, #ffffff 0%, #ecfff4 100%);
+    }
+
+    .korean-large {
+      font-size: clamp(30px, 5vw, 48px);
+      font-weight: 900;
+      line-height: 1.35;
+      word-break: keep-all;
+    }
+
+    .english-large {
+      font-size: clamp(36px, 8vw, 72px);
+      font-weight: 950;
+      line-height: 1.1;
+      color: var(--green);
+      overflow-wrap: anywhere;
+    }
+
+    .pronunciation {
+      margin-top: 10px;
+      color: var(--blue);
+      font-size: 22px;
+      font-weight: 850;
+    }
+
+    .pos-row {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 12px 0;
+    }
+
+    .pos-badge {
+      display: inline-grid;
+      place-items: center;
+      min-width: 42px;
+      min-height: 34px;
+      border-radius: 999px;
+      padding: 5px 11px;
+      background: var(--blue-soft);
+      color: var(--blue);
+      font-size: 17px;
+      font-weight: 950;
+    }
+
+    .example-box {
+      display: grid;
+      gap: 6px;
+      max-width: 760px;
+      margin: 18px auto 0;
+      padding: 14px 16px;
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.78);
+      border: 1px solid var(--line);
+      text-align: left;
+    }
+
+    .example-en {
+      color: var(--ink);
+      font-size: 21px;
+      font-weight: 850;
+      line-height: 1.35;
+    }
+
+    .example-ko {
+      color: var(--muted);
+      font-size: 18px;
+      font-weight: 750;
+      line-height: 1.35;
+    }
+
+    .hint {
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .miss-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 38px;
+      margin-bottom: 14px;
+      border-radius: 999px;
+      padding: 7px 14px;
+      background: var(--red-soft);
+      color: #a31f1f;
+      font-size: 17px;
+      font-weight: 900;
+    }
+
+    .timer-note {
+      min-height: 46px;
+      display: grid;
+      place-items: center;
+      border-radius: var(--radius);
+      background: var(--blue-soft);
+      color: var(--blue);
+      font-size: 20px;
+      font-weight: 900;
+      text-align: center;
+      padding: 10px 14px;
+    }
+
+    .stage-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .question-box {
+      display: grid;
+      gap: 16px;
+      padding: 26px;
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      box-shadow: var(--shadow);
+    }
+
+    .question-box .korean-large {
+      min-height: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .answer-line {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+    }
+
+    .feedback {
+      min-height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      font-size: 22px;
+      font-weight: 900;
+    }
+
+    .feedback button {
+      min-height: 54px;
+      font-size: 19px;
+      padding: 10px 18px;
+    }
+
+    .feedback.ok {
+      color: #0b7644;
+      background: var(--green-soft);
+    }
+
+    .feedback.bad {
+      color: #a31f1f;
+      background: var(--red-soft);
+    }
+
+    .test-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .test-row {
+      display: grid;
+      grid-template-columns: 54px minmax(0, 1fr) minmax(220px, 0.9fr);
+      gap: 10px;
+      align-items: center;
+      padding: 12px;
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+    }
+
+    .test-row.correct {
+      background: var(--green-soft);
+      border-color: #9adfba;
+    }
+
+    .test-row.wrong {
+      background: var(--red-soft);
+      border-color: #f2aaaa;
+    }
+
+    .num {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 999px;
+      background: var(--blue-soft);
+      color: var(--blue);
+      font-weight: 950;
+    }
+
+    .test-korean {
+      min-width: 0;
+      font-size: 22px;
+      font-weight: 850;
+      line-height: 1.3;
+      word-break: keep-all;
+    }
+
+    .correct-answer {
+      margin-top: 7px;
+      color: #a31f1f;
+      font-size: 17px;
+      font-weight: 850;
+    }
+
+    .confusion-note {
+      border-radius: var(--radius);
+      background: #fff7e8;
+      color: #8a5a00;
+      padding: 12px 14px;
+      font-size: 18px;
+      font-weight: 850;
+      line-height: 1.35;
+    }
+
+    .celebration {
+      min-height: 320px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      background: linear-gradient(180deg, #ffffff 0%, #f0fff6 100%);
+    }
+
+    .score {
+      font-size: clamp(42px, 8vw, 74px);
+      color: var(--green);
+      font-weight: 950;
+    }
+
+    .empty {
+      min-height: 180px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      color: var(--muted);
+      border: 2px dashed var(--line);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.65);
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    @media (max-width: 720px) {
+      .app {
+        padding: 14px;
+      }
+
+      .topbar, .study-header {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .manager-grid, .word-row, .answer-line, .test-row {
+        grid-template-columns: 1fr;
+      }
+
+      .day-controls {
+        grid-template-columns: 1fr;
+      }
+
+      .stage-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .day-item {
+        grid-template-columns: 1fr;
+      }
+
+      .test-row {
+        gap: 12px;
+      }
+
+      .flashcard-scene, .flashcard {
+        min-height: 430px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section id="homeScreen" class="screen active" aria-labelledby="homeTitle">
+      <div class="topbar">
+        <div>
+          <h1 id="homeTitle">단어 암기 앱</h1>
+          <p class="muted">Day별 단어를 3단계로 차근차근 외워요.</p>
+        </div>
+      </div>
+
+      <div class="stack">
+        <div id="dayList" class="day-list"></div>
+        <div class="actions">
+          <button id="startDayBtn">Day 선택하여 학습 시작</button>
+          <button id="managerBtn" class="secondary">단어 관리</button>
+          <button id="backupBtn" class="ghost">진도 백업</button>
+          <button id="restoreBtn" class="ghost">진도 불러오기</button>
+        </div>
+        <input id="restoreFile" type="file" accept="application/json,.json" hidden>
+        <div id="backupStatus" class="backup-status"></div>
+      </div>
+    </section>
+
+    <section id="managerScreen" class="screen" aria-labelledby="managerTitle">
+      <div class="topbar">
+        <div>
+          <h2 id="managerTitle">단어 관리</h2>
+          <p class="muted">Day 번호를 고르고 Korean → English 단어를 추가하세요.</p>
+        </div>
+        <button id="managerBackBtn" class="ghost">뒤로</button>
+      </div>
+
+      <div class="stack">
+        <div class="panel stack">
+          <div class="field">
+            <label for="daySelect">Day 선택 또는 입력</label>
+            <div class="day-controls">
+              <select id="dayPreset" aria-label="Day dropdown"></select>
+              <input id="daySelect" type="number" min="1" max="100" inputmode="numeric" placeholder="새 Day 입력">
+            </div>
+          </div>
+          <div class="manager-grid">
+            <div class="field">
+              <label for="koreanInput">Korean</label>
+              <input id="koreanInput" type="text" autocomplete="off">
+            </div>
+            <div class="field">
+              <label for="englishInput">English</label>
+              <input id="englishInput" type="text" autocomplete="off" autocapitalize="none" spellcheck="false">
+            </div>
+            <button id="addWordBtn" class="success">추가</button>
+          </div>
+        </div>
+
+        <div class="panel stack">
+          <h3 id="managerDayTitle">Day 33</h3>
+          <div id="managerWordList" class="word-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="stage1Screen" class="screen" aria-labelledby="stage1Title">
+      <div class="study-wrap">
+        <div class="study-header">
+          <div>
+            <h2 id="stage1Title">1단계: 보고 외우기</h2>
+            <p id="stage1Meta" class="muted"></p>
+          </div>
+          <div class="nav-actions">
+            <button id="stage1ToStage2" class="ghost">2단계로</button>
+            <button class="ghost homeBtn">홈</button>
+          </div>
+        </div>
+        <div id="stage1Bar"></div>
+        <div class="progress-track"><div id="stage1Progress" class="progress-fill"></div></div>
+        <div id="stage1Content"></div>
+      </div>
+    </section>
+
+    <section id="stage2Screen" class="screen" aria-labelledby="stage2Title">
+      <div class="study-wrap">
+        <div class="study-header">
+          <div>
+            <h2 id="stage2Title">2단계: 타이핑 연습</h2>
+            <p id="stage2Meta" class="muted"></p>
+          </div>
+          <div class="nav-actions">
+            <button id="stage2ToStage1" class="ghost">1단계로</button>
+            <button id="stage2RestartAllTop" class="ghost">전체 2단계</button>
+            <button id="stage2WeakOnly" class="ghost">오답만</button>
+            <button id="stage2ToStage3" class="ghost">3단계로</button>
+            <button class="ghost homeBtn">홈</button>
+          </div>
+        </div>
+        <div id="stage2Bar"></div>
+        <div class="progress-track"><div id="stage2Progress" class="progress-fill"></div></div>
+        <div id="stage2Content"></div>
+      </div>
+    </section>
+
+    <section id="stage3Screen" class="screen" aria-labelledby="stage3Title">
+      <div class="study-wrap">
+        <div class="study-header">
+          <div>
+            <h2 id="stage3Title">3단계: 최종 테스트</h2>
+            <p id="stage3Meta" class="muted"></p>
+          </div>
+          <div class="nav-actions">
+            <button id="stage3ToStage2" class="ghost">2단계로</button>
+            <button id="stage3ToStage1" class="ghost">1단계로</button>
+            <button id="stage3RestartAllTop" class="ghost">전체 3단계</button>
+            <button class="ghost homeBtn">홈</button>
+          </div>
+        </div>
+        <div id="stage3Bar"></div>
+        <div id="stage3Content"></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const WORDS_KEY = "words";
+    const PROGRESS_KEY = "progress";
+
+    const sampleWords = [
+      ["제공하다", "provide"],
+      ["설명서; 손을 쓰는, 육체노동의", "manual"],
+      ["얻다, 획득하다", "obtain"],
+      ["구하다, 저축하다, 절약하다, 저장하다", "save"],
+      ["~할 수 있게 하다, 가능하게 하다", "enable"],
+      ["암호, 부호", "code"],
+      ["작동시키다, 수술하다, 운영하다", "operate"],
+      ["연결하다, 관련, 연결, 링크", "link"],
+      ["바이러스", "virus"],
+      ["전자의, 전자 장비의", "electronic"],
+      ["접근(권), 컴퓨터에 접속하다", "access"],
+      ["휴대전화, 이동식의", "mobile"],
+      ["A가 ~하는 것을 막다, 방지하다", "prevent"],
+      ["무선의", "wireless"],
+      ["삭제하다", "delete"],
+      ["설치하다", "install"],
+      ["끌다, 드래그하다", "drag"],
+      ["장치, 기구", "device"],
+      ["편리한", "convenient"],
+      ["점검하다, 검사하다", "inspect"],
+      ["수리하다, 수선하다, 수리, 수선", "repair"],
+      ["기능, 기능하다, 작동하다", "function"],
+      ["수행하다, 공연하다, 연주하다", "perform"],
+      ["가상의", "virtual"],
+      ["고장 난", "broken"]
+    ];
+
+    const day34Words = [
+      ["특징, 특색; 특징을 이루다, ~이 특징이다", "feature", "[fi:tʃər]", "The best feature of the house is its large balcony.", "그 집의 가장 큰 특징은 넓은 발코니이다."],
+      ["차이, 다름", "difference", "[dífərəns]", "There are cultural differences between the East and the West.", "동양과 서양 사이에는 문화적 차이가 있다."],
+      ["다른, 별개의; 분명한, 뚜렷한", "distinct", "[distíŋkt]", "The two languages are quite distinct.", "그 두 언어는 꽤 다르다."],
+      ["것, 물건, 일", "stuff", "[stʌf]", "We moved all the stuff into the car.", "우리는 모든 물건을 차로 옮겼다."],
+      ["특정한; 구체적인, 명확한", "specific", "[spisífik]", "The building was built for a specific purpose.", "그 건물은 특정한 목적을 위해 지어졌다."],
+      ["전형적인, 대표적인", "typical", "[típikəl]", "This is a typical Mexican restaurant.", "이곳은 전형적인 멕시코 식당이다."],
+      ["대조, 차이; 대조하다, 대조를 이루다", "contrast", "[명 kɑ́ntræst / 동 kəntrǽst]", "The two cities make an interesting contrast.", "그 두 도시는 흥미로운 대조를 이룬다."],
+      ["정의하다, 뜻을 명확히 하다", "define", "[difáin]", "How would you define the word 'happiness'?", "당신은 '행복'이라는 단어를 어떻게 정의하시겠어요?"],
+      ["분명한, 확실한; 맑은, 투명한", "clear", "[kliər]", "Her explanation was simple and clear.", "그녀의 설명은 간단하고 분명했다."],
+      ["구별하다, 구분하다", "distinguish", "[distíŋgwiʃ]", "It's important to distinguish right from wrong.", "옳고 그름을 구별하는 것은 중요하다."],
+      ["이상한, 특이한; 홀수의", "odd", "[ɑd]", "It was a really odd story.", "그것은 정말 이상한 이야기였다."],
+      ["순수한, 섞이지 않은; 깨끗한", "pure", "[pjuər]", "These clothes are made of pure cotton.", "이 옷들은 순면으로 만들어졌다."],
+      ["유연한, 잘 구부러지는", "flexible", "[fléksəbəl]", "The shoes are made of flexible materials.", "그 신발은 유연한 재질로 만들어졌다."],
+      ["끈적거리는", "sticky", "[stíki]", "There's something sticky on the bench.", "벤치에 뭔가 끈적거리는 것이 있다."],
+      ["대략의, 대충의; (표면이) 거친", "rough", "[rʌf]", "This is a rough idea for a new movie.", "이것은 새 영화에 대한 대략의 아이디어이다."],
+      ["매우 비슷한; 비슷하게", "alike", "[əláik]", "Most of today's cars look alike.", "대부분의 요즘 차들은 매우 비슷해 보인다."],
+      ["각도, 각; 관점, 시각", "angle", "[ǽŋgl]", "All four angles of a square are equal.", "정사각형의 네 각은 모두 같다."],
+      ["조언; 팁, 사례금; 끝(부분)", "tip", "[tip]", "Here are some tips for learning English.", "영어 학습에 대한 몇 가지 조언이 있다."],
+      ["층, 겹", "layer", "[léiər]", "He was wearing several layers of clothing.", "그는 여러 겹의 옷을 입고 있었다."],
+      ["가장자리, 모서리", "edge", "[edʒ]", "I put the keyboard near the edge of the desk.", "나는 책상 가장자리 근처에 키보드를 놓았다."],
+      ["작고 둥그란 점", "dot", "[dɑt]", "The small island looks like a dot on the map.", "그 작은 섬은 지도 위에서 점처럼 보인다."],
+      ["끈, 줄", "string", "[striŋ]", "I tied the package with a string.", "나는 끈으로 소포를 묶었다."],
+      ["갈라지다, 금이 가다; 금", "crack", "[kræk]", "The ice on the lake began to crack.", "호수의 얼음에 금이 가기 시작했다."],
+      ["구식이 된, 시대에 뒤떨어진", "out of date", "", "The information in the book is out of date.", "그 책의 정보는 구식이다."],
+      ["줄이다; 나무를 베다", "cut down", "", "I'm trying to cut down on sweets.", "나는 단 음식을 줄이려고 노력 중이다."]
+    ];
+
+    const day35Words = [
+      ["수치, 숫자; 인물", "figure", "[fígʒər]", "The latest figures show that prices are rising.", "최근의 수치는 물가가 오르고 있다는 것을 보여준다."],
+      ["재다, 측정하다; 조치", "measure", "[méʒər]", "How can we measure the depth of a river?", "강의 깊이를 어떻게 측정할 수 있나요?"],
+      ["추정하다, 어림잡다; 추정치", "estimate", "[동 éstəmeit / 명 éstəmət]", "We estimate the audience at 1,000 people.", "우리는 관객을 천 명으로 추산하고 있다."],
+      ["정확한, 정밀한", "precise", "[prisáis]", "I want to know the precise figures.", "나는 정확한 수치를 알고 싶다."],
+      ["대략, 거의", "approximately", "[əprɑ́ksimətli]", "We'll arrive in approximately an hour.", "우리는 대략 한 시간 후에 도착할 것이다."],
+      ["총, 전체의; 완전한; 합계", "total", "[tóutl]", "The total cost was 5,000 dollars.", "총 비용은 5천 달러였다."],
+      ["계산하다", "calculate", "[kǽlkjuleit]", "I calculated the cost of the trip.", "나는 그 여행의 경비를 계산했다."],
+      ["곱하다; 증가하다, 증대하다", "multiply", "[mʌ́ltəplài]", "Multiply 2 and 5 together and you get 10.", "2와 5를 곱하면 10이 된다."],
+      ["최대의, 최고의; 최대, 최고", "maximum", "[mǽksəməm]", "The KTX has a maximum speed of 300 km/h.", "KTX는 최고 속도가 시속 300킬로미터이다."],
+      ["양, 수량, 분량", "quantity", "[kwɑ́ntəti]", "An elephant consumes a large quantity of food.", "코끼리는 많은 양의 음식을 먹는다."],
+      ["4분의 1; 15분", "quarter", "[kwɔ́ːrtər]", "Cut the pie into quarters.", "파이를 4등분해서 잘라라."],
+      ["막대한, 거대한", "enormous", "[inɔ́ːrməs]", "They spent an enormous amount of money on advertising.", "그들은 광고에 막대한 액수의 돈을 썼다."],
+      ["충분한", "sufficient", "[səfíʃənt]", "The money is sufficient to pay the debt.", "그 돈은 빚을 갚을 만큼 충분하다."],
+      ["보통의, 중간의, 적당한", "moderate", "[mɑ́dərət]", "Cook for 10 minutes over a moderate heat.", "중간 불에서 10분 동안 익히세요."],
+      ["거의", "nearly", "[níərli]", "It's nearly December. Christmas is coming!", "거의 12월이야. 크리스마스가 다가오고 있어!"],
+      ["약간의, 경미한", "slight", "[slait]", "I have a slight headache.", "나는 약간의 두통이 있다."],
+      ["평균의; 평균", "average", "[ǽvəridʒ]", "The average age of the audience was about 25.", "관객들의 평균 연령은 약 25세였다."],
+      ["극심한, 극도의", "extreme", "[ikstríːm]", "We experienced extreme cold weather last winter.", "우리는 작년 겨울에 극도의 추운 날씨를 경험했다."],
+      ["100만", "million", "[míljən]", "She donated a million dollars to a charity.", "그녀는 자선 단체에 100만 달러를 기부했다."],
+      ["10억", "billion", "[bíljən]", "The video reached a billion views on YouTube.", "그 영상은 유튜브에서 10억 조회수를 달성했다."],
+      ["줄이다, 낮추다", "reduce", "[ridjúːs]", "Listening to music can reduce stress.", "음악을 듣는 것이 스트레스를 줄일 수 있다."],
+      ["꽤, 상당히", "quite", "[kwait]", "The movie was quite interesting.", "그 영화는 상당히 재미있었다."],
+      ["더 멀리, 더; 추가의", "further", "[fə́ːrðər]", "Let's walk a little further.", "조금만 더 걷자."],
+      ["적어도, 최소한", "at least", "", "It will take at least half an hour to fix it.", "그것을 고치는 데 최소한 30분은 걸릴 것이다."],
+      ["게다가", "in addition", "", "The room was quite comfortable. In addition, it had a great ocean view.", "그 방은 상당히 안락했다. 게다가 멋진 바다 전망을 가지고 있었다."]
+    ];
+
+    const partsOfSpeechByDay = {
+      34: {
+        feature: ["명", "동"],
+        difference: ["명"],
+        distinct: ["형"],
+        stuff: ["명"],
+        specific: ["형"],
+        typical: ["형"],
+        contrast: ["명", "동"],
+        define: ["동"],
+        clear: ["형"],
+        distinguish: ["동"],
+        odd: ["형"],
+        pure: ["형"],
+        flexible: ["형"],
+        sticky: ["형"],
+        rough: ["형"],
+        alike: ["형", "부"],
+        angle: ["명"],
+        tip: ["명"],
+        layer: ["명"],
+        edge: ["명"],
+        dot: ["명"],
+        string: ["명"],
+        crack: ["동", "명"],
+        "out of date": ["숙어"],
+        "cut down": ["숙어", "동"]
+      },
+      35: {
+        figure: ["명"],
+        measure: ["동", "명"],
+        estimate: ["동", "명"],
+        precise: ["형"],
+        approximately: ["부"],
+        total: ["형", "명"],
+        calculate: ["동"],
+        multiply: ["동"],
+        maximum: ["형", "명"],
+        quantity: ["명"],
+        quarter: ["명"],
+        enormous: ["형"],
+        sufficient: ["형"],
+        moderate: ["형"],
+        nearly: ["부"],
+        slight: ["형"],
+        average: ["형", "명"],
+        extreme: ["형"],
+        million: ["명"],
+        billion: ["명"],
+        reduce: ["동"],
+        quite: ["부"],
+        further: ["부", "형"],
+        "at least": ["숙어"],
+        "in addition": ["숙어"]
+      }
+    };
+
+    const state = {
+      words: [],
+      progress: {
+        currentDay: 33,
+        currentStage: 1,
+        stage3Results: {}
+      },
+      selectedDay: 33,
+      stage1Queue: [],
+      stage1Current: null,
+      stage1SessionIds: [],
+      stage1Seen: 0,
+      stage1Mode: "slow",
+      stage1Timer: null,
+      stage1SecondsLeft: 5,
+      stage2Queue: [],
+      stage2Current: null,
+      stage2Locked: false,
+      stage2StartedAt: 0,
+      stage2AutoAdvance: true,
+      stage2LimitIds: null,
+      stage2NextStage3Ids: null,
+      stage3LimitIds: null
+    };
+
+    const $ = (id) => document.getElementById(id);
+
+    function uuid() {
+      if (crypto && crypto.randomUUID) return crypto.randomUUID();
+      return "id-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2);
+    }
+
+    function makeWord(day, korean, english, details = {}) {
+      return {
+        id: uuid(),
+        day: Number(day),
+        korean: korean.trim(),
+        english: english.trim().toLowerCase(),
+        partsOfSpeech: Array.isArray(details.partsOfSpeech) ? details.partsOfSpeech : [],
+        pronunciation: details.pronunciation || "",
+        example: details.example || "",
+        exampleKo: details.exampleKo || "",
+        stage1Pass: false,
+        stage1Missed: false,
+        stage1MissCount: 0,
+        stage2Missed: false,
+        stage2MissCount: 0,
+        stage2ReviewNeeded: false,
+        stage2LastWrongAnswer: "",
+        stage2Count: 0,
+        stage2Pass: false
+      };
+    }
+
+    function defaultProgress() {
+      return {
+        currentDay: 33,
+        currentStage: 1,
+        stage3Results: {}
+      };
+    }
+
+    function loadData() {
+      const storedWords = JSON.parse(localStorage.getItem(WORDS_KEY) || "null");
+      if (Array.isArray(storedWords) && storedWords.length) {
+        state.words = storedWords;
+      } else {
+        state.words = sampleWords.map(([korean, english]) => makeWord(33, korean, english));
+      }
+      normalizeWords();
+      seedDayWords(34, day34Words);
+      seedDayWords(35, day35Words);
+      applySeedDetails(34, day34Words);
+      applySeedDetails(35, day35Words);
+
+      const storedProgress = JSON.parse(localStorage.getItem(PROGRESS_KEY) || "null");
+      state.progress = storedProgress && typeof storedProgress === "object" ? {
+        ...defaultProgress(),
+        ...storedProgress,
+        stage3Results: storedProgress.stage3Results || {}
+      } : defaultProgress();
+
+      state.selectedDay = state.progress.currentDay || 33;
+      saveData();
+    }
+
+    function seedDayWords(day, entries) {
+      const hasDayWords = state.words.some((word) => word.day === Number(day));
+      if (hasDayWords) return;
+      entries.forEach((entry) => {
+        const [korean, english] = entry;
+        state.words.push(makeWord(day, korean, english, {
+          ...detailsFromEntry(entry),
+          partsOfSpeech: getSeedPartsOfSpeech(day, english)
+        }));
+      });
+    }
+
+    function applySeedDetails(day, entries) {
+      entries.forEach((entry) => {
+        const [, english] = entry;
+        const details = detailsFromEntry(entry);
+        const word = state.words.find((item) => item.day === Number(day) && item.english === english);
+        if (!word) return;
+        word.partsOfSpeech = getSeedPartsOfSpeech(day, english);
+        word.pronunciation = details.pronunciation;
+        word.example = details.example;
+        word.exampleKo = details.exampleKo;
+      });
+    }
+
+    function getSeedPartsOfSpeech(day, english) {
+      const key = String(english || "").toLowerCase();
+      return [...((partsOfSpeechByDay[Number(day)] || {})[key] || [])];
+    }
+
+    function detailsFromEntry(entry) {
+      return {
+        pronunciation: entry[2] || "",
+        example: entry[3] || "",
+        exampleKo: entry[4] || ""
+      };
+    }
+
+    function normalizeWords() {
+      state.words = state.words.map((word) => {
+        const legacyMissed = word.stage1Missed === true ? 1 : 0;
+        const count = Number.isFinite(Number(word.stage1MissCount)) ? Number(word.stage1MissCount) : legacyMissed;
+        const legacyStage2Missed = word.stage2Missed === true ? 1 : 0;
+        const stage2MissCount = Number.isFinite(Number(word.stage2MissCount)) ? Number(word.stage2MissCount) : legacyStage2Missed;
+        return {
+          ...word,
+          partsOfSpeech: Array.isArray(word.partsOfSpeech) ? word.partsOfSpeech : [],
+          pronunciation: typeof word.pronunciation === "string" ? word.pronunciation : "",
+          example: typeof word.example === "string" ? word.example : "",
+          exampleKo: typeof word.exampleKo === "string" ? word.exampleKo : "",
+          stage1Missed: count > 0,
+          stage1MissCount: count,
+          stage2Missed: stage2MissCount > 0,
+          stage2MissCount,
+          stage2ReviewNeeded: typeof word.stage2ReviewNeeded === "boolean" ? word.stage2ReviewNeeded : stage2MissCount > 0,
+          stage2LastWrongAnswer: typeof word.stage2LastWrongAnswer === "string" ? word.stage2LastWrongAnswer : ""
+        };
+      });
+    }
+
+    function saveData() {
+      localStorage.setItem(WORDS_KEY, JSON.stringify(state.words));
+      localStorage.setItem(PROGRESS_KEY, JSON.stringify(state.progress));
+    }
+
+    function exportBackup() {
+      saveData();
+      const payload = {
+        app: "korean-english-vocab",
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        words: state.words,
+        progress: state.progress
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const date = new Date().toISOString().slice(0, 10);
+      link.href = url;
+      link.download = `vocab-progress-${date}.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 500);
+      setBackupStatus("진도 백업 파일을 만들었어요.");
+    }
+
+    function importBackupFile(event) {
+      const file = event.target.files && event.target.files[0];
+      event.target.value = "";
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const payload = JSON.parse(String(reader.result || ""));
+          if (!payload || !Array.isArray(payload.words) || !payload.progress || typeof payload.progress !== "object") {
+            throw new Error("Invalid backup");
+          }
+          const ok = confirm("현재 저장된 단어와 진도를 백업 파일 내용으로 바꿀까요?");
+          if (!ok) return;
+
+          state.words = payload.words;
+          state.progress = {
+            ...defaultProgress(),
+            ...payload.progress,
+            stage3Results: payload.progress.stage3Results || {}
+          };
+          normalizeWords();
+          state.selectedDay = state.progress.currentDay || 33;
+          state.stage1Queue = [];
+          state.stage1Current = null;
+          state.stage1SessionIds = [];
+          state.stage2Queue = [];
+          state.stage2Current = null;
+          state.stage2LimitIds = null;
+          state.stage2NextStage3Ids = null;
+          state.stage3LimitIds = null;
+          saveData();
+          renderHome();
+          setBackupStatus("진도를 불러왔어요.");
+        } catch (error) {
+          alert("백업 파일을 읽을 수 없어요.");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function setBackupStatus(message) {
+      const status = $("backupStatus");
+      if (!status) return;
+      status.textContent = message;
+    }
+
+    function wordsForDay(day = state.progress.currentDay) {
+      return state.words
+        .filter((word) => word.day === Number(day))
+        .sort((a, b) => state.words.indexOf(a) - state.words.indexOf(b));
+    }
+
+    function daysWithWords() {
+      const counts = new Map();
+      state.words.forEach((word) => counts.set(word.day, (counts.get(word.day) || 0) + 1));
+      return [...counts.entries()].sort((a, b) => a[0] - b[0]);
+    }
+
+    function dayStats(day) {
+      const list = wordsForDay(day);
+      const total = list.length || 1;
+      const s1 = list.filter((word) => word.stage1Pass).length;
+      const s2 = list.filter((word) => word.stage2Pass).length;
+      const stage3Known = list.length && list.every((word) => state.progress.stage3Results[word.id] === true);
+      return {
+        total: list.length,
+        s1,
+        s2,
+        s1Done: list.length > 0 && s1 === total,
+        s2Done: list.length > 0 && s2 === total,
+        s3Done: Boolean(stage3Known)
+      };
+    }
+
+    function showScreen(id) {
+      if (id !== "stage1Screen") clearStage1Timer();
+      document.querySelectorAll(".screen").forEach((screen) => screen.classList.remove("active"));
+      $(id).classList.add("active");
+      window.scrollTo({ top: 0, behavior: "instant" });
+    }
+
+    function renderStageBar(containerId, activeStage, stats = dayStats(state.progress.currentDay)) {
+      const labels = ["1단계", "2단계", "3단계"];
+      const done = [stats.s1Done, stats.s2Done, stats.s3Done];
+      $(containerId).innerHTML = `
+        <div class="stage-bar" aria-label="Stage progress">
+          ${labels.map((label, index) => {
+            const stage = index + 1;
+            const cls = stage === activeStage ? "active" : done[index] ? "done" : "";
+            return `<div class="stage-pill ${cls}">${label}</div>`;
+          }).join("")}
+        </div>
+      `;
+    }
+
+    function updateStageNavButtons() {
+      const stats = dayStats(state.progress.currentDay);
+      const stage2WeakCount = getWeakStage2Targets(wordsForDay()).length;
+      const stage1ToStage2 = $("stage1ToStage2");
+      const stage2ToStage3 = $("stage2ToStage3");
+      const stage2WeakOnly = $("stage2WeakOnly");
+      if (stage1ToStage2) stage1ToStage2.disabled = !stats.s1Done;
+      if (stage2ToStage3) stage2ToStage3.disabled = !stats.s2Done;
+      if (stage2WeakOnly) {
+        stage2WeakOnly.disabled = !stage2WeakCount;
+        stage2WeakOnly.textContent = `오답만 (${stage2WeakCount})`;
+      }
+    }
+
+    function renderHome() {
+      const days = daysWithWords();
+      if (!days.length) {
+        $("dayList").innerHTML = `<div class="empty">아직 단어가 없어요. 단어 관리에서 새 Day를 추가하세요.</div>`;
+      } else {
+        $("dayList").innerHTML = days.map(([day, count]) => {
+          const stats = dayStats(day);
+          const pendingStage2Review = getPendingStage2ReviewTargets(wordsForDay(day)).length;
+          const selected = Number(day) === Number(state.selectedDay) ? "selected" : "";
+          return `
+            <button class="day-item ${selected}" data-day="${day}" aria-pressed="${selected ? "true" : "false"}">
+              <div>
+                <div class="day-title">Day ${day} - ${count}단어</div>
+                <div class="status-row">
+                  <span class="badge ${stats.s1Done ? "done" : ""}">Stage 1 ${stats.s1}/${stats.total}</span>
+                  <span class="badge ${stats.s2Done ? "done" : ""}">Stage 2 ${stats.s2}/${stats.total}</span>
+                  <span class="badge ${stats.s3Done ? "done" : ""}">Stage 3 ${stats.s3Done ? "완료" : "미완료"}</span>
+                  ${pendingStage2Review ? `<span class="badge">2단계 오답 복습 ${pendingStage2Review}개</span>` : ""}
+                </div>
+              </div>
+              <span class="badge">${Number(day) === Number(state.selectedDay) ? "선택됨" : "선택"}</span>
+            </button>
+          `;
+        }).join("");
+      }
+
+      document.querySelectorAll(".day-item").forEach((item) => {
+        item.addEventListener("click", () => {
+          state.selectedDay = Number(item.dataset.day);
+          state.progress.currentDay = state.selectedDay;
+          saveData();
+          renderHome();
+        });
+      });
+      showScreen("homeScreen");
+    }
+
+    function renderManager() {
+      $("dayPreset").innerHTML = Array.from({ length: 100 }, (_, index) => {
+        const day = index + 1;
+        return `<option value="${day}">Day ${day}</option>`;
+      }).join("");
+      $("dayPreset").value = state.selectedDay;
+      $("daySelect").value = state.selectedDay;
+      renderManagerWords();
+      showScreen("managerScreen");
+    }
+
+    function renderManagerWords() {
+      const day = Number($("daySelect").value || state.selectedDay || 33);
+      state.selectedDay = day;
+      if (day >= 1 && day <= 100) $("dayPreset").value = day;
+      $("managerDayTitle").textContent = `Day ${day}`;
+      const list = wordsForDay(day);
+      $("managerWordList").innerHTML = list.length ? list.map((word, index) => `
+        <div class="word-row">
+          <strong>${index + 1}. ${escapeHtml(word.korean)}</strong>
+          <span>${escapeHtml(word.english)}</span>
+          <button class="danger delete-word" data-id="${word.id}">삭제</button>
+        </div>
+      `).join("") : `<div class="empty">이 Day에는 아직 단어가 없어요.</div>`;
+
+      document.querySelectorAll(".delete-word").forEach((button) => {
+        button.addEventListener("click", () => {
+          const id = button.dataset.id;
+          state.words = state.words.filter((word) => word.id !== id);
+          delete state.progress.stage3Results[id];
+          saveData();
+          renderManagerWords();
+        });
+      });
+    }
+
+    function addWord() {
+      const day = Number($("daySelect").value);
+      const korean = $("koreanInput").value.trim();
+      const english = $("englishInput").value.trim().toLowerCase();
+      if (!day || day < 1 || day > 100 || !korean || !english) {
+        alert("Day 1~100, Korean, English를 모두 입력하세요.");
+        return;
+      }
+      state.words.push(makeWord(day, korean, english));
+      state.selectedDay = day;
+      state.progress.currentDay = day;
+      $("koreanInput").value = "";
+      $("englishInput").value = "";
+      $("koreanInput").focus();
+      saveData();
+      renderManagerWords();
+    }
+
+    function startSelectedDay() {
+      if (!wordsForDay(state.selectedDay).length) {
+        alert("선택한 Day에 단어가 없어요.");
+        return;
+      }
+      state.progress.currentDay = Number(state.selectedDay);
+      const stats = dayStats(state.progress.currentDay);
+      const pendingStage2Review = getPendingStage2ReviewTargets();
+      if (!stats.s1Done) startStage1();
+      else if (pendingStage2Review.length) startStage2ReviewLoop(pendingStage2Review);
+      else if (!stats.s2Done) startStage2();
+      else startStage3();
+    }
+
+    function startStage1(mode = "slow") {
+      state.progress.currentStage = 1;
+      state.stage1Mode = mode;
+      state.stage1Queue = wordsForDay().filter((word) => !word.stage1Pass).map((word) => word.id);
+      state.stage1SessionIds = [...state.stage1Queue];
+      state.stage1Seen = wordsForDay().filter((word) => word.stage1Pass).length;
+      saveData();
+      showScreen("stage1Screen");
+      nextStage1Word();
+    }
+
+    function nextStage1Word() {
+      clearStage1Timer();
+      const words = wordsForDay();
+      updateStageNavButtons();
+      const sessionWords = getStage1SessionWords();
+      const sessionTotal = sessionWords.length || words.length;
+      const passed = sessionWords.length ? sessionWords.filter((word) => word.stage1Pass).length : words.filter((word) => word.stage1Pass).length;
+      const modeName = getStage1ModeName();
+      $("stage1Meta").textContent = `Day ${state.progress.currentDay} · ${modeName} · ${passed}/${sessionTotal}`;
+      $("stage1Progress").style.width = `${sessionTotal ? (passed / sessionTotal) * 100 : 0}%`;
+      renderStageBar("stage1Bar", 1);
+
+      if (!state.stage1Queue.length) {
+        const missBuckets = getStage1MissBuckets(words);
+        const weakCount = missBuckets.once + missBuckets.twice + missBuckets.threePlus;
+        const doneTitle = state.stage1Mode === "timed" ? "5초 테스트 완료! 🎉" : "1단계 완료! 🎉";
+        $("stage1Content").innerHTML = `
+          <div class="panel celebration stack">
+            <div>
+              <div class="score">${doneTitle}</div>
+              <p class="muted">다음 복습 방식을 고를 수 있어요.</p>
+            </div>
+            <div class="actions">
+              <button id="restartStage1Slow" class="ghost">천천히 다시 보기</button>
+              <button id="restartStage1Timed" class="ghost">5초 테스트</button>
+              <button id="restartStage1Weak" class="danger" ${weakCount ? "" : "disabled"}>약한 단어만 보기 (${weakCount})</button>
+              <button id="goStage2" class="success">2단계로 이동</button>
+            </div>
+          </div>
+        `;
+        $("restartStage1Slow").addEventListener("click", () => restartStage1("slow"));
+        $("restartStage1Timed").addEventListener("click", () => restartStage1("timed"));
+        $("restartStage1Weak").addEventListener("click", () => restartStage1("weak"));
+        $("goStage2").addEventListener("click", () => startStage2());
+        return;
+      }
+
+      state.stage1Current = state.stage1Queue.shift();
+      const word = state.words.find((item) => item.id === state.stage1Current);
+      const isTimedMode = state.stage1Mode === "timed";
+      const noteText = isTimedMode ? "5초 안에 알아요를 누르세요" : getStage1ModeNote();
+      const missLabel = getStage1MissLabel(word);
+      const missBadge = missLabel ? `<div class="miss-badge">${missLabel}</div>` : "";
+      const posBadges = getPartOfSpeechBadges(word);
+      const studyInfo = getStage1StudyInfo(word);
+      $("stage1Content").innerHTML = `
+        <div class="flashcard-scene">
+          <button id="flashcard" class="flashcard" aria-label="카드를 탭하여 한글과 영어 바꾸기">
+            <div class="card-face card-front">
+              <div>
+                ${missBadge}
+                <div class="korean-large">${escapeHtml(word.korean)}</div>
+                ${posBadges}
+                <div class="hint">탭하면 영어가 보여요</div>
+              </div>
+            </div>
+            <div class="card-face card-back">
+              <div>
+                ${missBadge}
+                <div class="english-large">${escapeHtml(word.english)}</div>
+                ${posBadges}
+                ${studyInfo}
+                <div class="hint">다시 탭하면 한글로 돌아가요</div>
+              </div>
+            </div>
+          </button>
+        </div>
+        <div id="stage1Timer" class="timer-note">${noteText}</div>
+        <div id="stage1Actions" class="stage-actions">
+          <button id="knowBtn" class="success">✅ 알아요</button>
+          <button id="dontKnowBtn" class="danger">❌ 몰라요</button>
+        </div>
+      `;
+      $("flashcard").addEventListener("click", () => {
+        $("flashcard").classList.toggle("flipped");
+      });
+      $("knowBtn").addEventListener("click", () => {
+        clearStage1Timer();
+        word.stage1Pass = true;
+        saveData();
+        nextStage1Word();
+      });
+      $("dontKnowBtn").addEventListener("click", () => handleStage1DontKnow(word));
+      if (isTimedMode) startStage1Timer(word);
+    }
+
+    function getPartOfSpeechBadges(word) {
+      if (!word || !Array.isArray(word.partsOfSpeech) || !word.partsOfSpeech.length) return "";
+      return `
+        <div class="pos-row">
+          ${word.partsOfSpeech.map((part) => `<span class="pos-badge">${escapeHtml(part)}</span>`).join("")}
+        </div>
+      `;
+    }
+
+    function getStage1StudyInfo(word) {
+      const pronunciation = word.pronunciation ? `<div class="pronunciation">${escapeHtml(word.pronunciation)}</div>` : "";
+      const example = word.example ? `
+        <div class="example-box">
+          <div class="example-en">${escapeHtml(word.example)}</div>
+          ${word.exampleKo ? `<div class="example-ko">${escapeHtml(word.exampleKo)}</div>` : ""}
+        </div>
+      ` : "";
+      return pronunciation || example ? `${pronunciation}${example}` : "";
+    }
+
+    function getStage1ModeName() {
+      if (state.stage1Mode === "timed") return "5초 테스트";
+      if (state.stage1Mode === "weak") return "약한 단어";
+      return "천천히 외우기";
+    }
+
+    function getStage1SessionWords() {
+      if (!state.stage1SessionIds.length) return [];
+      return state.stage1SessionIds
+        .map((id) => state.words.find((word) => word.id === id))
+        .filter(Boolean);
+    }
+
+    function getStage1ModeNote() {
+      if (state.stage1Mode === "weak") return "가장 많이 틀린 단어부터 다시 확인해요";
+      return "시간 제한 없이 천천히 외워요";
+    }
+
+    function getStage1MissLabel(word) {
+      const count = Number(word.stage1MissCount || 0);
+      if (count >= 3) return "3번 이상 틀린 단어";
+      if (count > 0) return `${count}번 틀린 단어`;
+      return "";
+    }
+
+    function getStage1MissBuckets(words = wordsForDay()) {
+      return words.reduce((buckets, word) => {
+        const count = Number(word.stage1MissCount || 0);
+        if (count === 1) buckets.once += 1;
+        else if (count === 2) buckets.twice += 1;
+        else if (count >= 3) buckets.threePlus += 1;
+        return buckets;
+      }, { once: 0, twice: 0, threePlus: 0 });
+    }
+
+    function startStage1Timer(word) {
+      state.stage1SecondsLeft = 5;
+      updateStage1TimerText();
+      state.stage1Timer = setInterval(() => {
+        state.stage1SecondsLeft -= 1;
+        updateStage1TimerText();
+        if (state.stage1SecondsLeft <= 0) {
+          expireStage1KnowButton(word);
+        }
+      }, 1000);
+    }
+
+    function clearStage1Timer() {
+      if (state.stage1Timer) {
+        clearInterval(state.stage1Timer);
+        state.stage1Timer = null;
+      }
+    }
+
+    function updateStage1TimerText() {
+      const timer = $("stage1Timer");
+      if (!timer) return;
+      timer.textContent = `${state.stage1SecondsLeft}초 안에 알아요를 누르세요`;
+    }
+
+    function expireStage1KnowButton(word) {
+      if (!word || state.stage1Current !== word.id) return;
+      clearStage1Timer();
+      const knowBtn = $("knowBtn");
+      const timer = $("stage1Timer");
+      if (knowBtn) knowBtn.disabled = true;
+      if (timer) timer.textContent = "시간 끝! 몰라요를 눌러 다시 볼게요";
+    }
+
+    function handleStage1DontKnow(word) {
+      if (!word || state.stage1Current !== word.id) return;
+      const dontKnowBtn = $("dontKnowBtn");
+      if (dontKnowBtn && dontKnowBtn.dataset.next === "true") {
+        nextStage1Word();
+        return;
+      }
+      clearStage1Timer();
+      word.stage1Missed = true;
+      word.stage1MissCount = Number(word.stage1MissCount || 0) + 1;
+      state.stage1Queue.push(word.id);
+      saveData();
+      const flashcard = $("flashcard");
+      if (flashcard && flashcard.classList.contains("flipped")) {
+        nextStage1Word();
+        return;
+      }
+      revealStage1AnswerForReview();
+    }
+
+    function revealStage1AnswerForReview() {
+      const flashcard = $("flashcard");
+      const knowBtn = $("knowBtn");
+      const dontKnowBtn = $("dontKnowBtn");
+      const timer = $("stage1Timer");
+      if (flashcard) flashcard.classList.add("flipped");
+      if (knowBtn) knowBtn.disabled = true;
+      if (dontKnowBtn) {
+        dontKnowBtn.textContent = "다음";
+        dontKnowBtn.dataset.next = "true";
+      }
+      if (timer) timer.textContent = "영어 단어를 보고 다음으로 넘어가세요";
+    }
+
+    function restartStage1(mode) {
+      const words = wordsForDay();
+      const targets = getStage1RestartTargets(mode, words);
+      if (!targets.length) return;
+      state.stage1Mode = mode;
+      targets.forEach((word) => {
+        word.stage1Pass = false;
+      });
+      state.stage1Queue = targets.map((word) => word.id);
+      state.stage1SessionIds = [...state.stage1Queue];
+      state.stage1Current = null;
+      saveData();
+      nextStage1Word();
+    }
+
+    function getStage1RestartTargets(mode, words) {
+      if (mode === "weak") return getWeakStage1Targets(words);
+      return words;
+    }
+
+    function getWeakStage1Targets(words) {
+      return words
+        .filter((word) => Number(word.stage1MissCount || 0) > 0)
+        .sort((a, b) => Number(b.stage1MissCount || 0) - Number(a.stage1MissCount || 0));
+    }
+
+    function getStage2MissLabel(word) {
+      const count = Number(word.stage2MissCount || 0);
+      if (count >= 3) return "2단계 3번 이상 틀린 단어";
+      if (count > 0) return `2단계 ${count}번 틀린 단어`;
+      return "";
+    }
+
+    function getWeakStage2Targets(words = wordsForDay()) {
+      return words
+        .filter((word) => Number(word.stage2MissCount || 0) > 0)
+        .sort((a, b) => Number(b.stage2MissCount || 0) - Number(a.stage2MissCount || 0));
+    }
+
+    function getPendingStage2ReviewTargets(words = wordsForDay()) {
+      return words
+        .filter((word) => word.stage2ReviewNeeded === true)
+        .sort((a, b) => Number(b.stage2MissCount || 0) - Number(a.stage2MissCount || 0));
+    }
+
+    function restartStage2WeakOnly() {
+      const targets = getWeakStage2Targets();
+      if (!targets.length) return;
+      startStage2ReviewLoop(targets);
+    }
+
+    function startStage2ReviewLoop(targets = getPendingStage2ReviewTargets()) {
+      if (!targets.length) return;
+      targets.forEach((word) => {
+        word.stage2Count = 0;
+        word.stage2Pass = false;
+      });
+      saveData();
+      const ids = targets.map((word) => word.id);
+      startStage2(ids, true, ids);
+    }
+
+    function restartStage2All() {
+      const words = wordsForDay();
+      words.forEach((word) => {
+        word.stage2Count = 0;
+        word.stage2Pass = false;
+      });
+      saveData();
+      startStage2(null, false);
+    }
+
+    function restartStage3All() {
+      wordsForDay().forEach((word) => {
+        delete state.progress.stage3Results[word.id];
+      });
+      state.stage3LimitIds = null;
+      saveData();
+      startStage3();
+    }
+
+    function getStage2ConfusionNote(word) {
+      const wrong = (word.stage2LastWrongAnswer || "").trim();
+      if (!wrong) return "";
+      const confusedWord = wordsForDay().find((item) => item.id !== word.id && item.english === wrong);
+      if (confusedWord) {
+        return `지난번에 "${escapeHtml(wrong)}"라고 썼어요. "${escapeHtml(wrong)}"는 "${escapeHtml(confusedWord.korean)}" 뜻이에요.`;
+      }
+      return `지난번에 "${escapeHtml(wrong)}"라고 썼던 단어예요. 뜻을 보고 천천히 다시 떠올려요.`;
+    }
+
+    function getStage2WrongHelp(word, answer) {
+      if (!answer) return "빈칸으로 제출했어요.";
+      const confusedWord = wordsForDay().find((item) => item.id !== word.id && item.english === answer);
+      if (confusedWord) {
+        return `내 답: ${escapeHtml(answer)} · ${escapeHtml(answer)} = ${escapeHtml(confusedWord.korean)}`;
+      }
+      return `내 답: ${escapeHtml(answer)}`;
+    }
+
+    function startStage2(limitIds = null, autoAdvance = true, nextStage3Ids = null) {
+      state.progress.currentStage = 2;
+      state.stage2AutoAdvance = autoAdvance;
+      state.stage2LimitIds = Array.isArray(limitIds) ? [...limitIds] : null;
+      state.stage2NextStage3Ids = Array.isArray(nextStage3Ids) ? [...nextStage3Ids] : null;
+      const source = wordsForDay()
+        .filter((word) => !state.stage2LimitIds || state.stage2LimitIds.includes(word.id))
+        .filter((word) => !word.stage2Pass);
+      state.stage2Queue = source.map((word) => word.id);
+      state.stage2Locked = false;
+      saveData();
+      showScreen("stage2Screen");
+      nextStage2Word(autoAdvance);
+    }
+
+    function nextStage2Word(autoAdvance = true) {
+      const words = wordsForDay();
+      const targetWords = state.stage2LimitIds
+        ? words.filter((word) => state.stage2LimitIds.includes(word.id))
+        : words;
+      updateStageNavButtons();
+      const passed = targetWords.filter((word) => word.stage2Pass).length;
+      const modeLabel = state.stage2LimitIds ? "오답 복습 · " : "";
+      $("stage2Meta").textContent = `Day ${state.progress.currentDay} · ${modeLabel}${passed}/${targetWords.length}`;
+      $("stage2Progress").style.width = `${targetWords.length ? (passed / targetWords.length) * 100 : 0}%`;
+      renderStageBar("stage2Bar", 2);
+
+      const remaining = targetWords.filter((word) => !word.stage2Pass);
+      if (!remaining.length || !state.stage2Queue.length) {
+        if (remaining.length) state.stage2Queue = remaining.map((word) => word.id);
+        if (!state.stage2Queue.length) {
+          if (autoAdvance) {
+            const nextStage3Ids = state.stage2NextStage3Ids ? [...state.stage2NextStage3Ids] : null;
+            state.stage2LimitIds = null;
+            state.stage2NextStage3Ids = null;
+            startStage3(nextStage3Ids);
+            return;
+          }
+          state.stage2LimitIds = null;
+          state.stage2NextStage3Ids = null;
+          $("stage2Content").innerHTML = `
+            <div class="panel celebration stack">
+              <div>
+                <div class="score">2단계 완료! 🎉</div>
+                <p class="muted">연속 2번 정답을 모두 달성했어요.</p>
+              </div>
+              <div class="actions">
+                <button id="restartStage2All" class="ghost">처음부터 다시하기</button>
+                <button id="restartStage2Weak" class="danger" ${getWeakStage2Targets(words).length ? "" : "disabled"}>오답 단어만 다시하기 (${getWeakStage2Targets(words).length})</button>
+                <button id="goStage3" class="success">3단계로 이동</button>
+              </div>
+            </div>
+          `;
+          $("restartStage2All").addEventListener("click", restartStage2All);
+          $("restartStage2Weak").addEventListener("click", restartStage2WeakOnly);
+          $("goStage3").addEventListener("click", () => startStage3());
+          return;
+        }
+      }
+
+      state.stage2Current = state.stage2Queue.shift();
+      state.stage2Locked = false;
+      state.stage2StartedAt = Date.now();
+      const word = state.words.find((item) => item.id === state.stage2Current);
+      const missLabel = getStage2MissLabel(word);
+      const missBadge = missLabel ? `<div class="miss-badge">${missLabel}</div>` : "";
+      const confusionNote = getStage2ConfusionNote(word);
+      $("stage2Content").innerHTML = `
+        <div class="question-box">
+          ${missBadge}
+          <div class="korean-large">${escapeHtml(word.korean)}</div>
+          ${confusionNote ? `<div class="confusion-note">${confusionNote}</div>` : ""}
+          <div class="timer-note">빠르게 떠올리면 한 번에 통과</div>
+          <div class="answer-line">
+            <input id="stage2Answer" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="English answer">
+            <button id="stage2Check">확인</button>
+          </div>
+          <div id="stage2Feedback" class="feedback" hidden></div>
+        </div>
+      `;
+      $("stage2Answer").focus();
+      $("stage2Check").addEventListener("click", checkStage2Answer);
+      $("stage2Answer").addEventListener("keydown", (event) => {
+        if (event.key === "Enter") checkStage2Answer();
+      });
+    }
+
+    function checkStage2Answer() {
+      if (state.stage2Locked) return;
+      const word = state.words.find((item) => item.id === state.stage2Current);
+      const answer = $("stage2Answer").value.trim().toLowerCase();
+      const feedback = $("stage2Feedback");
+      const isFastAnswer = Date.now() - state.stage2StartedAt <= 10000;
+      state.stage2Locked = true;
+      $("stage2Check").disabled = true;
+      $("stage2Answer").disabled = true;
+
+      if (answer === word.english) {
+        word.stage2Count = isFastAnswer ? 2 : word.stage2Count + 1;
+        if (word.stage2Count >= 2) word.stage2Pass = true;
+        feedback.hidden = false;
+        feedback.className = "feedback ok";
+        feedback.textContent = isFastAnswer ? "✅ 한번에 통과!" : word.stage2Pass ? "✅ 통과!" : "✅ 한번만 더 맞히자!";
+        saveData();
+        setTimeout(() => nextStage2Word(state.stage2AutoAdvance), 750);
+      } else {
+        word.stage2Count = 0;
+        word.stage2Pass = false;
+        word.stage2Missed = true;
+        word.stage2MissCount = Number(word.stage2MissCount || 0) + 1;
+        word.stage2ReviewNeeded = true;
+        if (answer) word.stage2LastWrongAnswer = answer;
+        state.stage2Queue.push(word.id);
+        feedback.hidden = false;
+        feedback.className = "feedback bad";
+        feedback.innerHTML = `
+          <span>❌ ${getStage2WrongHelp(word, answer)} · 정답: ${escapeHtml(word.english)}</span>
+          <div class="answer-line" style="width:100%;">
+            <input id="stage2CopyAnswer" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="정답 따라쓰기">
+            <button id="stage2CopyCheck" class="danger">따라쓰기 확인</button>
+          </div>
+          <div id="stage2CopyNotice" class="copy-feedback" hidden>붙여넣기 없이 직접 써보세요.</div>
+        `;
+        saveData();
+        blockPasteInput($("stage2CopyAnswer"), $("stage2CopyNotice"));
+        $("stage2CopyAnswer").focus();
+        $("stage2CopyCheck").addEventListener("click", () => checkStage2CopyAnswer(word));
+        $("stage2CopyAnswer").addEventListener("keydown", (event) => {
+          if (event.key === "Enter") checkStage2CopyAnswer(word);
+        });
+      }
+    }
+
+    function checkStage2CopyAnswer(word) {
+      const copyInput = $("stage2CopyAnswer");
+      const copyButton = $("stage2CopyCheck");
+      const feedback = $("stage2Feedback");
+      if (!copyInput || !copyButton || !word) return;
+      if (copyInput.value.trim().toLowerCase() !== word.english) {
+        feedback.className = "feedback bad";
+        copyInput.focus();
+        copyInput.select();
+        return;
+      }
+      copyInput.disabled = true;
+      copyButton.disabled = true;
+      feedback.className = "feedback ok";
+      feedback.innerHTML = `<span>✅ 잘 썼어요. 다음 단어로 가요.</span>`;
+      setTimeout(() => nextStage2Word(state.stage2AutoAdvance), 650);
+    }
+
+    function startStage3(limitIds = null) {
+      state.progress.currentStage = 3;
+      state.stage3LimitIds = Array.isArray(limitIds) ? [...limitIds] : null;
+      saveData();
+      renderStage3();
+      showScreen("stage3Screen");
+    }
+
+    function getStage3Words() {
+      const words = wordsForDay();
+      if (!state.stage3LimitIds) return words;
+      return words.filter((word) => state.stage3LimitIds.includes(word.id));
+    }
+
+    function renderStage3(graded = false, results = null, answers = {}) {
+      const words = getStage3Words();
+      const isMiniTest = Boolean(state.stage3LimitIds);
+      updateStageNavButtons();
+      $("stage3Meta").textContent = `Day ${state.progress.currentDay} · ${isMiniTest ? "오답 미니 테스트 · " : ""}${words.length}단어`;
+      renderStageBar("stage3Bar", 3);
+      $("stage3Content").innerHTML = `
+        <div class="panel stack">
+          <div id="stage3Score"></div>
+          <div class="test-list">
+            ${words.map((word, index) => {
+              const result = results ? results[word.id] : null;
+              const rowClass = result === true ? "correct" : result === false ? "wrong" : "";
+              return `
+                <div class="test-row ${rowClass}" data-id="${word.id}">
+                  <div class="num">${index + 1}</div>
+                  <div class="test-korean">${escapeHtml(word.korean)}</div>
+                  <div>
+                    <input class="stage3-answer" data-id="${word.id}" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" value="${escapeHtml(answers[word.id] || "")}" ${graded ? "disabled" : ""}>
+                    ${result === false ? `<div class="correct-answer">내 답: ${escapeHtml(answers[word.id] || "빈칸")} · 정답: ${escapeHtml(word.english)}</div>` : ""}
+                  </div>
+                </div>
+              `;
+            }).join("")}
+          </div>
+          <div id="stage3Actions" class="actions">
+            ${graded ? "" : `<button id="gradeBtn" class="success">채점하기</button>`}
+          </div>
+        </div>
+      `;
+
+      if (!graded) {
+        $("gradeBtn").addEventListener("click", gradeStage3);
+        const firstInput = document.querySelector(".stage3-answer");
+        if (firstInput) firstInput.focus();
+      }
+    }
+
+    function gradeStage3() {
+      const words = getStage3Words();
+      const isMiniTest = Boolean(state.stage3LimitIds);
+      const answers = [...document.querySelectorAll(".stage3-answer")].reduce((map, input) => {
+        map[input.dataset.id] = input.value.trim().toLowerCase();
+        return map;
+      }, {});
+      const results = {};
+      const wrongIds = [];
+      words.forEach((word) => {
+        const ok = answers[word.id] === word.english;
+        results[word.id] = ok;
+        state.progress.stage3Results[word.id] = ok;
+        if (!ok) {
+          wrongIds.push(word.id);
+          word.stage2ReviewNeeded = true;
+          if (answers[word.id]) word.stage2LastWrongAnswer = answers[word.id];
+        }
+      });
+      if (!wrongIds.length) {
+        words.forEach((word) => {
+          word.stage2ReviewNeeded = false;
+        });
+      }
+      saveData();
+      renderStage3(true, results, answers);
+
+      const score = words.length - wrongIds.length;
+      $("stage3Score").innerHTML = `
+        <div class="question-box">
+          <div class="score">${score}/${words.length}</div>
+          <p class="muted">${score === words.length ? (isMiniTest ? "🎉 오답 정복 완료!" : "🎉 100점 완성!") : "틀린 단어를 바로잡고 다시 확인해요."}</p>
+        </div>
+      `;
+
+      if (score === words.length) {
+        $("stage3Actions").innerHTML = `
+          <button id="finishHome" class="success">홈으로</button>
+          ${isMiniTest ? `<button id="fullStage3Again" class="ghost">전체 3단계 보기</button>` : ""}
+        `;
+        $("finishHome").addEventListener("click", renderHome);
+        if (isMiniTest) $("fullStage3Again").addEventListener("click", () => startStage3());
+      } else {
+        const wrongWords = wrongIds.map((id) => state.words.find((word) => word.id === id));
+        $("stage3Actions").innerHTML = `
+          <div class="panel stack" style="box-shadow:none; width:100%;">
+            <h3>틀린 단어</h3>
+            <p class="muted">정답을 한 번 따라쓴 뒤, 이 단어들만 2단계로 다시 연습해요. 2단계가 끝나면 오답 미니 테스트로 바로 확인합니다.</p>
+            <div class="word-list">
+              ${wrongWords.map((word) => `
+                <div class="word-row correction-row">
+                  <strong>${escapeHtml(word.korean)}</strong>
+                  <span>${escapeHtml(word.english)}</span>
+                  <input class="stage3-copy" data-id="${word.id}" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="정답 따라쓰기">
+                </div>
+              `).join("")}
+            </div>
+            <div id="stage3CopyFeedback" class="copy-feedback" hidden></div>
+            <button id="retryWrong" class="danger">따라쓰고 2단계로 다시</button>
+          </div>
+        `;
+        $("retryWrong").addEventListener("click", () => retryStage3WrongWords(wrongIds));
+        document.querySelectorAll(".stage3-copy").forEach((input) => {
+          blockPasteInput(input, $("stage3CopyFeedback"));
+          input.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") retryStage3WrongWords(wrongIds);
+          });
+        });
+        const firstCopy = document.querySelector(".stage3-copy");
+        if (firstCopy) firstCopy.focus();
+      }
+    }
+
+    function retryStage3WrongWords(wrongIds) {
+      const feedback = $("stage3CopyFeedback");
+      const firstWrongInput = wrongIds
+        .map((id) => {
+          const word = state.words.find((item) => item.id === id);
+          const input = document.querySelector(`.stage3-copy[data-id="${id}"]`);
+          return input && input.value.trim().toLowerCase() === word.english ? null : input;
+        })
+        .find(Boolean);
+
+      if (firstWrongInput) {
+        if (feedback) {
+          feedback.hidden = false;
+          feedback.textContent = "정답을 똑같이 한 번씩 써주세요.";
+        }
+        firstWrongInput.focus();
+        firstWrongInput.select();
+        return;
+      }
+
+      wrongIds.forEach((id) => {
+        const word = state.words.find((item) => item.id === id);
+        word.stage2Count = 0;
+        word.stage2Pass = false;
+        word.stage2ReviewNeeded = true;
+      });
+      saveData();
+      startStage2(wrongIds, true, wrongIds);
+    }
+
+    function blockPasteInput(input, feedback) {
+      if (!input) return;
+      const showMessage = () => {
+        if (!feedback) return;
+        feedback.hidden = false;
+        feedback.textContent = "붙여넣기 없이 직접 써보세요.";
+      };
+      ["paste", "drop"].forEach((eventName) => {
+        input.addEventListener(eventName, (event) => {
+          event.preventDefault();
+          showMessage();
+        });
+      });
+      input.addEventListener("beforeinput", (event) => {
+        if (event.inputType === "insertFromPaste" || event.inputType === "insertFromDrop") {
+          event.preventDefault();
+          showMessage();
+        }
+      });
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    $("startDayBtn").addEventListener("click", startSelectedDay);
+    $("managerBtn").addEventListener("click", renderManager);
+    $("backupBtn").addEventListener("click", exportBackup);
+    $("restoreBtn").addEventListener("click", () => $("restoreFile").click());
+    $("restoreFile").addEventListener("change", importBackupFile);
+    $("managerBackBtn").addEventListener("click", renderHome);
+    $("addWordBtn").addEventListener("click", addWord);
+    $("stage1ToStage2").addEventListener("click", () => startStage2(null, false));
+    $("stage2ToStage1").addEventListener("click", () => startStage1());
+    $("stage2RestartAllTop").addEventListener("click", restartStage2All);
+    $("stage2WeakOnly").addEventListener("click", restartStage2WeakOnly);
+    $("stage2ToStage3").addEventListener("click", () => startStage3());
+    $("stage3ToStage2").addEventListener("click", () => startStage2(null, false));
+    $("stage3ToStage1").addEventListener("click", () => startStage1());
+    $("stage3RestartAllTop").addEventListener("click", restartStage3All);
+    $("dayPreset").addEventListener("change", () => {
+      $("daySelect").value = $("dayPreset").value;
+      renderManagerWords();
+    });
+    $("daySelect").addEventListener("input", renderManagerWords);
+    $("englishInput").addEventListener("keydown", (event) => {
+      if (event.key === "Enter") addWord();
+    });
+    document.querySelectorAll(".homeBtn").forEach((button) => button.addEventListener("click", renderHome));
+
+    loadData();
+    renderHome();
+  </script>
+</body>
+</html>
