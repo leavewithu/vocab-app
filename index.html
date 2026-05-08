@@ -1635,25 +1635,25 @@
 
     function speakWord(word) {
       if (!word || !canSpeak()) return;
-      speakText(word.english, "en-US", "영어 단어를 읽어주는 중이에요.");
+      speakText(word.english, "en-US", "영어 단어를 읽어주는 중이에요.", 1);
     }
 
     function speakKorean(word) {
       if (!word || !canSpeak()) return;
-      speakText(word.korean, "ko-KR", "한글 뜻을 읽어주는 중이에요.");
+      speakText(word.korean, "ko-KR", "한글 뜻을 읽어주는 중이에요.", 1.5);
     }
 
     function speakExample(word) {
       if (!word || !word.example || !canSpeak()) return;
-      speakText(word.example, "en-US", "영어 예문을 읽어주는 중이에요.");
+      speakText(word.example, "en-US", "영어 예문을 읽어주는 중이에요.", 0.9);
     }
 
-    function speakText(text, lang, message) {
+    function speakText(text, lang, message, rate) {
       if (!text || !canSpeak()) return;
       stopSpeech();
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = lang;
-      utterance.rate = lang === "ko-KR" ? 1.5 : 0.82;
+      utterance.rate = rate;
       utterance.pitch = lang === "ko-KR" ? 0.78 : 1;
       const voice = pickVoice(lang);
       if (voice) utterance.voice = voice;
