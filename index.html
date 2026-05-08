@@ -479,11 +479,28 @@
       text-align: left;
     }
 
+    .example-top {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 12px;
+    }
+
     .example-en {
       color: var(--ink);
       font-size: 21px;
       font-weight: 850;
       line-height: 1.35;
+    }
+
+    .speaker-btn {
+      min-width: 60px;
+      min-height: 60px;
+      padding: 0 14px;
+      border-radius: 999px;
+      font-size: 24px;
+      line-height: 1;
+      flex: 0 0 auto;
     }
 
     .example-ko {
@@ -529,8 +546,16 @@
 
     .stage-actions {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(3, 1fr);
       gap: 14px;
+    }
+
+    .voice-note {
+      min-height: 34px;
+      color: var(--muted);
+      font-size: 16px;
+      font-weight: 800;
+      text-align: center;
     }
 
     .question-box {
@@ -781,6 +806,7 @@
           </div>
           <div class="nav-actions">
             <button id="stage1ToStage2" class="ghost">2단계로</button>
+            <button id="resetStage1Misses" class="ghost">1단계 틀린 기록 초기화</button>
             <button class="ghost homeBtn">홈</button>
           </div>
         </div>
@@ -801,6 +827,7 @@
             <button id="stage2ToStage1" class="ghost">1단계로</button>
             <button id="stage2RestartAllTop" class="ghost">전체 2단계</button>
             <button id="stage2WeakOnly" class="ghost">오답만</button>
+            <button id="resetStage2Misses" class="ghost">2단계 틀린 기록 초기화</button>
             <button id="stage2ToStage3" class="ghost">3단계로</button>
             <button class="ghost homeBtn">홈</button>
           </div>
@@ -822,6 +849,7 @@
             <button id="stage3ToStage2" class="ghost">2단계로</button>
             <button id="stage3ToStage1" class="ghost">1단계로</button>
             <button id="stage3RestartAllTop" class="ghost">전체 3단계</button>
+            <button id="resetStage3Misses" class="ghost">3단계 오답 초기화</button>
             <button class="ghost homeBtn">홈</button>
           </div>
         </div>
@@ -836,31 +864,31 @@
     const PROGRESS_KEY = "progress";
 
     const sampleWords = [
-      ["제공하다", "provide"],
-      ["설명서; 손을 쓰는, 육체노동의", "manual"],
-      ["얻다, 획득하다", "obtain"],
-      ["구하다, 저축하다, 절약하다, 저장하다", "save"],
-      ["~할 수 있게 하다, 가능하게 하다", "enable"],
-      ["암호, 부호", "code"],
-      ["작동시키다, 수술하다, 운영하다", "operate"],
-      ["연결하다, 관련, 연결, 링크", "link"],
-      ["바이러스", "virus"],
-      ["전자의, 전자 장비의", "electronic"],
-      ["접근(권), 컴퓨터에 접속하다", "access"],
-      ["휴대전화, 이동식의", "mobile"],
-      ["A가 ~하는 것을 막다, 방지하다", "prevent"],
-      ["무선의", "wireless"],
-      ["삭제하다", "delete"],
-      ["설치하다", "install"],
-      ["끌다, 드래그하다", "drag"],
-      ["장치, 기구", "device"],
-      ["편리한", "convenient"],
-      ["점검하다, 검사하다", "inspect"],
-      ["수리하다, 수선하다, 수리, 수선", "repair"],
-      ["기능, 기능하다, 작동하다", "function"],
-      ["수행하다, 공연하다, 연주하다", "perform"],
-      ["가상의", "virtual"],
-      ["고장 난", "broken"]
+      ["장치, 기구", "device", "[diváis]", "He invented a device for generating electricity.", "그는 전기를 발생시키는 장치를 발명했다."],
+      ["기능; 기능하다, 작동하다", "function", "[fʌ́ŋkʃən]", "What is the main function of an engine?", "엔진의 주요 기능은 무엇인가요?"],
+      ["작동시키다; 수술하다; 운영하다", "operate", "[ɑ́pəreit]", "We learned how to operate the machine.", "우리는 그 기계를 작동시키는 법을 배웠다."],
+      ["편리한", "convenient", "[kənvíːnjənt]", "The camera is easy and convenient to use.", "그 카메라는 사용하기에 쉽고 편리하다."],
+      ["수리하다, 수선하다; 수리, 수선", "repair", "[ripέər]", "He is good at repairing computers.", "그는 컴퓨터를 수리하는 데 능숙하다."],
+      ["전자의, 전자 장비의", "electronic", "[ilektrɑ́nik]", "Please turn off all electronic devices.", "모든 전자 장비를 꺼 주세요."],
+      ["제공하다", "provide", "[prəváid]", "We provide a 24-hour repair service.", "우리는 24시간 수리 서비스를 제공합니다."],
+      ["점검하다, 검사하다", "inspect", "[inspékt]", "Vehicles should be inspected regularly.", "차량은 정기적으로 점검을 받아야 한다."],
+      ["설명서; 손을 쓰는, 육체노동의", "manual", "[mǽnjuəl]", "Read the manual before you use it.", "그것을 사용하기 전에 설명서를 읽어라."],
+      ["~할 수 있게 하다, 가능하게 하다", "enable", "[inéibəl]", "Computers enable us to work faster.", "컴퓨터는 우리가 더 빨리 일할 수 있게 해 준다."],
+      ["휴대 전화, 이동식의", "mobile", "[móubəl]", "What's your mobile number?", "당신의 휴대 전화 번호가 어떻게 되나요?"],
+      ["무선의", "wireless", "[wáiərlis]", "Use our wireless internet service for free.", "우리의 무선 인터넷 서비스를 무료로 이용하세요."],
+      ["얻다, 획득하다", "obtain", "[əbtéin]", "Visit our website to obtain further information.", "더 많은 정보를 얻으려면 저희 웹사이트를 방문하세요."],
+      ["수행하다; 공연하다, 연주하다", "perform", "[pərfɔ́ːrm]", "A computer can perform many tasks at the same time.", "컴퓨터는 동시에 많은 업무를 수행할 수 있다."],
+      ["삭제하다", "delete", "[dilíːt]", "I deleted the file by mistake.", "나는 실수로 그 파일을 삭제했다."],
+      ["구하다; 저축하다; 절약하다, 아끼다; 저장하다", "save", "[seiv]", "The doctor saved my life.", "그 의사가 내 목숨을 구했다."],
+      ["설치하다", "install", "[instɔ́ːl]", "Did you install this program on your computer?", "네 컴퓨터에 이 프로그램을 설치했니?"],
+      ["가상의", "virtual", "[və́ːrtʃuəl]", "You can do anything in a virtual world.", "너는 가상 세계에서 무엇이든 할 수 있다."],
+      ["바이러스", "virus", "[váiərəs]", "How can I get rid of the virus on my laptop?", "내 노트북의 바이러스를 어떻게 제거할 수 있나요?"],
+      ["끌다; 드래그하다", "drag", "[dræg]", "We dragged the desk out of the classroom.", "우리는 그 책상을 교실 밖으로 끌어냈다."],
+      ["암호, 부호", "code", "[koud]", "The soldiers tried to break the enemy's code.", "그 군인들은 적군의 암호를 풀려고 노력했다."],
+      ["접근(권); 컴퓨터에 접속하다", "access", "[ǽkses]", "He has access to all of the information.", "그는 모든 정보에 접근할 수 있다."],
+      ["연결하다; 관련, 연결; 링크", "link", "[liŋk]", "The bridge links the two countries.", "그 다리는 두 나라를 연결한다."],
+      ["고장 난", "out of order", "", "I think the printer is out of order.", "그 프린터는 고장 난 것 같다."],
+      ["A가 ~하는 것을 막다[방지하다]", "prevent a from -ing", "", "This program will prevent you from accessing harmful websites.", "이 프로그램은 당신이 유해한 웹사이트에 접근하는 것을 막아 줄 것이다."]
     ];
 
     const day34Words = [
@@ -920,6 +948,33 @@
     ];
 
     const partsOfSpeechByDay = {
+      33: {
+        device: ["명"],
+        function: ["명", "동"],
+        operate: ["동"],
+        convenient: ["형"],
+        repair: ["동", "명"],
+        electronic: ["형"],
+        provide: ["동"],
+        inspect: ["동"],
+        manual: ["명", "형"],
+        enable: ["동"],
+        mobile: ["형"],
+        wireless: ["형"],
+        obtain: ["동"],
+        perform: ["동"],
+        delete: ["동"],
+        save: ["동"],
+        install: ["동"],
+        virtual: ["형"],
+        virus: ["명"],
+        drag: ["동"],
+        code: ["명"],
+        access: ["명", "동"],
+        link: ["동", "명"],
+        "out of order": ["숙어"],
+        "prevent a from -ing": ["숙어"]
+      },
       34: {
         feature: ["명", "동"],
         difference: ["명"],
@@ -1046,8 +1101,13 @@
         state.words = sampleWords.map(([korean, english]) => makeWord(33, korean, english));
       }
       normalizeWords();
+      syncSeedDayWords(33, sampleWords, {
+        "out of order": ["broken"],
+        "prevent a from -ing": ["prevent"]
+      });
       seedDayWords(34, day34Words);
       seedDayWords(35, day35Words);
+      applySeedDetails(33, sampleWords);
       applySeedDetails(34, day34Words);
       applySeedDetails(35, day35Words);
 
@@ -1072,6 +1132,44 @@
           partsOfSpeech: getSeedPartsOfSpeech(day, english)
         }));
       });
+    }
+
+    function syncSeedDayWords(day, entries, aliases = {}) {
+      const dayNumber = Number(day);
+      const existing = state.words.filter((word) => word.day === dayNumber);
+      const used = new Set();
+      const synced = entries.map((entry) => {
+        const [korean, english] = entry;
+        const key = String(english || "").toLowerCase();
+        const candidates = [key, ...(aliases[key] || []).map((alias) => String(alias).toLowerCase())];
+        let word = existing.find((item) => !used.has(item) && candidates.includes(String(item.english || "").toLowerCase()));
+        if (!word) word = makeWord(dayNumber, korean, english);
+        used.add(word);
+        const details = detailsFromEntry(entry);
+        word.day = dayNumber;
+        word.korean = korean;
+        word.english = key;
+        word.partsOfSpeech = getSeedPartsOfSpeech(dayNumber, english);
+        word.pronunciation = details.pronunciation;
+        word.example = details.example;
+        word.exampleKo = details.exampleKo;
+        return word;
+      });
+      const extras = existing.filter((word) => !used.has(word));
+      const nextWords = [];
+      let inserted = false;
+      state.words.forEach((word) => {
+        if (word.day !== dayNumber) {
+          nextWords.push(word);
+          return;
+        }
+        if (!inserted) {
+          nextWords.push(...synced, ...extras);
+          inserted = true;
+        }
+      });
+      if (!inserted) nextWords.push(...synced, ...extras);
+      state.words = nextWords;
     }
 
     function applySeedDetails(day, entries) {
@@ -1226,6 +1324,7 @@
 
     function showScreen(id) {
       if (id !== "stage1Screen") clearStage1Timer();
+      if (id !== "stage1Screen") stopSpeech();
       document.querySelectorAll(".screen").forEach((screen) => screen.classList.remove("active"));
       $(id).classList.add("active");
       window.scrollTo({ top: 0, behavior: "instant" });
@@ -1247,15 +1346,33 @@
 
     function updateStageNavButtons() {
       const stats = dayStats(state.progress.currentDay);
+      const words = wordsForDay();
+      const stage1WeakCount = getWeakStage1Targets(words).length;
       const stage2WeakCount = getWeakStage2Targets(wordsForDay()).length;
+      const stage3WrongCount = getStage3WrongTargets(words).length;
       const stage1ToStage2 = $("stage1ToStage2");
       const stage2ToStage3 = $("stage2ToStage3");
       const stage2WeakOnly = $("stage2WeakOnly");
+      const resetStage1Misses = $("resetStage1Misses");
+      const resetStage2Misses = $("resetStage2Misses");
+      const resetStage3Misses = $("resetStage3Misses");
       if (stage1ToStage2) stage1ToStage2.disabled = !stats.s1Done;
       if (stage2ToStage3) stage2ToStage3.disabled = !stats.s2Done;
       if (stage2WeakOnly) {
         stage2WeakOnly.disabled = !stage2WeakCount;
         stage2WeakOnly.textContent = `오답만 (${stage2WeakCount})`;
+      }
+      if (resetStage1Misses) {
+        resetStage1Misses.disabled = !stage1WeakCount;
+        resetStage1Misses.textContent = `1단계 틀린 기록 초기화 (${stage1WeakCount})`;
+      }
+      if (resetStage2Misses) {
+        resetStage2Misses.disabled = !stage2WeakCount;
+        resetStage2Misses.textContent = `2단계 틀린 기록 초기화 (${stage2WeakCount})`;
+      }
+      if (resetStage3Misses) {
+        resetStage3Misses.disabled = !stage3WrongCount;
+        resetStage3Misses.textContent = `3단계 오답 초기화 (${stage3WrongCount})`;
       }
     }
 
@@ -1377,6 +1494,7 @@
 
     function nextStage1Word() {
       clearStage1Timer();
+      stopSpeech();
       const words = wordsForDay();
       updateStageNavButtons();
       const sessionWords = getStage1SessionWords();
@@ -1422,7 +1540,7 @@
       const studyInfo = getStage1StudyInfo(word);
       $("stage1Content").innerHTML = `
         <div class="flashcard-scene">
-          <button id="flashcard" class="flashcard" aria-label="카드를 탭하여 한글과 영어 바꾸기">
+          <div id="flashcard" class="flashcard" role="button" tabindex="0" aria-label="카드를 탭하여 한글과 영어 바꾸기">
             <div class="card-face card-front">
               <div>
                 ${missBadge}
@@ -1440,19 +1558,46 @@
                 <div class="hint">다시 탭하면 한글로 돌아가요</div>
               </div>
             </div>
-          </button>
+          </div>
         </div>
         <div id="stage1Timer" class="timer-note">${noteText}</div>
+        <div id="voiceNote" class="voice-note"></div>
         <div id="stage1Actions" class="stage-actions">
+          <button id="listenBtn" class="ghost">영어 듣기</button>
           <button id="knowBtn" class="success">✅ 알아요</button>
           <button id="dontKnowBtn" class="danger">❌ 몰라요</button>
         </div>
       `;
       $("flashcard").addEventListener("click", () => {
-        $("flashcard").classList.toggle("flipped");
+        const card = $("flashcard");
+        card.classList.toggle("flipped");
+        if (card.classList.contains("flipped")) {
+          speakWord(word);
+        } else {
+          speakKorean(word);
+        }
       });
+      $("flashcard").addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        $("flashcard").click();
+      });
+      $("listenBtn").addEventListener("click", () => speakWord(word));
+      const exampleListenBtn = $("exampleListenBtn");
+      if (exampleListenBtn) {
+        exampleListenBtn.addEventListener("click", (event) => {
+          event.stopPropagation();
+          speakExample(word);
+        });
+      }
+      if (!canSpeak()) {
+        $("listenBtn").disabled = true;
+        if (exampleListenBtn) exampleListenBtn.disabled = true;
+        $("voiceNote").textContent = "이 브라우저에서는 음성 듣기를 지원하지 않아요.";
+      }
       $("knowBtn").addEventListener("click", () => {
         clearStage1Timer();
+        stopSpeech();
         word.stage1Pass = true;
         saveData();
         nextStage1Word();
@@ -1474,11 +1619,74 @@
       const pronunciation = word.pronunciation ? `<div class="pronunciation">${escapeHtml(word.pronunciation)}</div>` : "";
       const example = word.example ? `
         <div class="example-box">
-          <div class="example-en">${escapeHtml(word.example)}</div>
+          <div class="example-top">
+            <div class="example-en">${escapeHtml(word.example)}</div>
+            <button id="exampleListenBtn" class="ghost speaker-btn" type="button" aria-label="영어 예문 듣기">🔊</button>
+          </div>
           ${word.exampleKo ? `<div class="example-ko">${escapeHtml(word.exampleKo)}</div>` : ""}
         </div>
       ` : "";
       return pronunciation || example ? `${pronunciation}${example}` : "";
+    }
+
+    function canSpeak() {
+      return "speechSynthesis" in window && "SpeechSynthesisUtterance" in window;
+    }
+
+    function speakWord(word) {
+      if (!word || !canSpeak()) return;
+      speakText(word.english, "en-US", "영어 단어를 읽어주는 중이에요.");
+    }
+
+    function speakKorean(word) {
+      if (!word || !canSpeak()) return;
+      speakText(word.korean, "ko-KR", "한글 뜻을 읽어주는 중이에요.");
+    }
+
+    function speakExample(word) {
+      if (!word || !word.example || !canSpeak()) return;
+      speakText(word.example, "en-US", "영어 예문을 읽어주는 중이에요.");
+    }
+
+    function speakText(text, lang, message) {
+      if (!text || !canSpeak()) return;
+      stopSpeech();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = lang;
+      utterance.rate = lang === "ko-KR" ? 1.5 : 0.82;
+      utterance.pitch = lang === "ko-KR" ? 0.78 : 1;
+      const voice = pickVoice(lang);
+      if (voice) utterance.voice = voice;
+      const note = $("voiceNote");
+      if (note) note.textContent = message;
+      utterance.onend = () => {
+        const currentNote = $("voiceNote");
+        if (currentNote) currentNote.textContent = "";
+      };
+      utterance.onerror = () => {
+        const currentNote = $("voiceNote");
+        if (currentNote) currentNote.textContent = "소리를 켜고 다시 눌러보세요.";
+      };
+      speechSynthesis.speak(utterance);
+    }
+
+    function pickVoice(lang) {
+      const voices = speechSynthesis.getVoices();
+      const language = lang.toLowerCase().slice(0, 2);
+      const matchingVoices = voices.filter((item) => item.lang && item.lang.toLowerCase().startsWith(language));
+      if (lang === "ko-KR") {
+        const maleNameHints = ["male", "man", "injoo", "injoon", "joon", "jinho", "minho", "seojun", "seung", "hyun"];
+        const maleVoice = matchingVoices.find((item) => {
+          const name = item.name.toLowerCase();
+          return maleNameHints.some((hint) => name.includes(hint));
+        });
+        if (maleVoice) return maleVoice;
+      }
+      return matchingVoices[0];
+    }
+
+    function stopSpeech() {
+      if (canSpeak()) speechSynthesis.cancel();
     }
 
     function getStage1ModeName() {
@@ -1582,6 +1790,8 @@
         dontKnowBtn.dataset.next = "true";
       }
       if (timer) timer.textContent = "영어 단어를 보고 다음으로 넘어가세요";
+      const word = state.words.find((item) => item.id === state.stage1Current);
+      speakWord(word);
     }
 
     function restartStage1(mode) {
@@ -1610,6 +1820,24 @@
         .sort((a, b) => Number(b.stage1MissCount || 0) - Number(a.stage1MissCount || 0));
     }
 
+    function resetStage1MissRecords() {
+      const targets = getWeakStage1Targets(wordsForDay());
+      if (!targets.length) return;
+      const ok = confirm(`1단계 틀린 기록 ${targets.length}개를 초기화할까요? 학습 통과 기록은 그대로 둡니다.`);
+      if (!ok) return;
+      targets.forEach((word) => {
+        word.stage1Missed = false;
+        word.stage1MissCount = 0;
+      });
+      saveData();
+      updateStageNavButtons();
+      const restartWeak = $("restartStage1Weak");
+      if (restartWeak) {
+        restartWeak.disabled = true;
+        restartWeak.textContent = "약한 단어만 보기 (0)";
+      }
+    }
+
     function getStage2MissLabel(word) {
       const count = Number(word.stage2MissCount || 0);
       if (count >= 3) return "2단계 3번 이상 틀린 단어";
@@ -1623,6 +1851,26 @@
         .sort((a, b) => Number(b.stage2MissCount || 0) - Number(a.stage2MissCount || 0));
     }
 
+    function resetStage2MissRecords() {
+      const targets = getWeakStage2Targets();
+      if (!targets.length) return;
+      const ok = confirm(`2단계 틀린 기록 ${targets.length}개를 초기화할까요? 2단계 통과 기록은 그대로 둡니다.`);
+      if (!ok) return;
+      targets.forEach((word) => {
+        word.stage2Missed = false;
+        word.stage2MissCount = 0;
+        word.stage2ReviewNeeded = false;
+        word.stage2LastWrongAnswer = "";
+      });
+      state.stage2LimitIds = null;
+      state.stage2NextStage3Ids = null;
+      saveData();
+      updateStageNavButtons();
+      if ($("stage2Screen").classList.contains("active")) {
+        startStage2(null, false);
+      }
+    }
+
     function getPendingStage2ReviewTargets(words = wordsForDay()) {
       return words
         .filter((word) => word.stage2ReviewNeeded === true)
@@ -1633,6 +1881,28 @@
       const targets = getWeakStage2Targets();
       if (!targets.length) return;
       startStage2ReviewLoop(targets);
+    }
+
+    function getStage3WrongTargets(words = wordsForDay()) {
+      return words.filter((word) => state.progress.stage3Results[word.id] === false);
+    }
+
+    function resetStage3WrongRecords() {
+      const targets = getStage3WrongTargets();
+      if (!targets.length) return;
+      const ok = confirm(`3단계 오답 기록 ${targets.length}개를 초기화할까요? 맞힌 기록은 그대로 둡니다.`);
+      if (!ok) return;
+      targets.forEach((word) => {
+        delete state.progress.stage3Results[word.id];
+        if (Number(word.stage2MissCount || 0) === 0) {
+          word.stage2ReviewNeeded = false;
+          word.stage2LastWrongAnswer = "";
+        }
+      });
+      state.stage3LimitIds = null;
+      saveData();
+      updateStageNavButtons();
+      if ($("stage3Screen").classList.contains("active")) renderStage3();
     }
 
     function startStage2ReviewLoop(targets = getPendingStage2ReviewTargets()) {
@@ -2028,13 +2298,16 @@
     $("managerBackBtn").addEventListener("click", renderHome);
     $("addWordBtn").addEventListener("click", addWord);
     $("stage1ToStage2").addEventListener("click", () => startStage2(null, false));
+    $("resetStage1Misses").addEventListener("click", resetStage1MissRecords);
     $("stage2ToStage1").addEventListener("click", () => startStage1());
     $("stage2RestartAllTop").addEventListener("click", restartStage2All);
     $("stage2WeakOnly").addEventListener("click", restartStage2WeakOnly);
+    $("resetStage2Misses").addEventListener("click", resetStage2MissRecords);
     $("stage2ToStage3").addEventListener("click", () => startStage3());
     $("stage3ToStage2").addEventListener("click", () => startStage2(null, false));
     $("stage3ToStage1").addEventListener("click", () => startStage1());
     $("stage3RestartAllTop").addEventListener("click", restartStage3All);
+    $("resetStage3Misses").addEventListener("click", resetStage3WrongRecords);
     $("dayPreset").addEventListener("change", () => {
       $("daySelect").value = $("dayPreset").value;
       renderManagerWords();
