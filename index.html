@@ -913,6 +913,7 @@
           </div>
           <div class="nav-actions">
             <button id="stage1ToStage2" class="ghost">2단계로</button>
+            <button id="stage1ToStage3" class="ghost">3단계로</button>
             <button id="resetStage1Misses" class="ghost">1단계 틀린 기록 초기화</button>
             <button class="ghost homeBtn">홈</button>
           </div>
@@ -1505,14 +1506,16 @@
       const spellingTroubleCount = getSpellingTroubleCount(words);
       const stage3WrongCount = getStage3WrongTargets(words).length;
       const stage1ToStage2 = $("stage1ToStage2");
+      const stage1ToStage3 = $("stage1ToStage3");
       const stage2ToStage3 = $("stage2ToStage3");
       const stage2WeakOnly = $("stage2WeakOnly");
       const stage2TroubleChunks = $("stage2TroubleChunks");
       const resetStage1Misses = $("resetStage1Misses");
       const resetStage2Misses = $("resetStage2Misses");
       const resetStage3Misses = $("resetStage3Misses");
-      if (stage1ToStage2) stage1ToStage2.disabled = !stats.s1Done;
-      if (stage2ToStage3) stage2ToStage3.disabled = !stats.s2Done;
+      if (stage1ToStage2) stage1ToStage2.disabled = !words.length;
+      if (stage1ToStage3) stage1ToStage3.disabled = !words.length;
+      if (stage2ToStage3) stage2ToStage3.disabled = !words.length;
       if (stage2WeakOnly) {
         stage2WeakOnly.disabled = !stage2WeakCount;
         stage2WeakOnly.textContent = `오답만 (${stage2WeakCount})`;
@@ -2821,6 +2824,7 @@
     $("managerBackBtn").addEventListener("click", renderHome);
     $("addWordBtn").addEventListener("click", addWord);
     $("stage1ToStage2").addEventListener("click", () => startStage2(null, false));
+    $("stage1ToStage3").addEventListener("click", () => startStage3());
     $("resetStage1Misses").addEventListener("click", resetStage1MissRecords);
     $("stage2ToStage1").addEventListener("click", () => startStage1());
     $("stage2RestartAllTop").addEventListener("click", restartStage2All);
