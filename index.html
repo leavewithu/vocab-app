@@ -1872,15 +1872,26 @@
 
     function pickVoice(lang) {
       const voices = speechSynthesis.getVoices();
-      const language = lang.toLowerCase().slice(0, 2);
+      const exactLang = lang.toLowerCase();
+      const language = exactLang.slice(0, 2);
+      const exactVoices = voices.filter((item) => item.lang && item.lang.toLowerCase() === exactLang);
       const matchingVoices = voices.filter((item) => item.lang && item.lang.toLowerCase().startsWith(language));
+      if (lang === "en-US") {
+        const usNameHints = ["samantha", "alex", "ava", "allison", "susan", "tom", "nicky", "joelle", "aaron", "evan", "american"];
+        const preferredUsVoice = exactVoices.find((item) => {
+          const name = item.name.toLowerCase();
+          return usNameHints.some((hint) => name.includes(hint));
+        });
+        return preferredUsVoice || exactVoices[0] || matchingVoices[0];
+      }
       if (lang === "ko-KR") {
         const maleNameHints = ["male", "man", "injoo", "injoon", "joon", "jinho", "minho", "seojun", "seung", "hyun"];
-        const maleVoice = matchingVoices.find((item) => {
+        const maleVoice = exactVoices.find((item) => {
           const name = item.name.toLowerCase();
           return maleNameHints.some((hint) => name.includes(hint));
         });
         if (maleVoice) return maleVoice;
+        return exactVoices[0] || matchingVoices[0];
       }
       return matchingVoices[0];
     }
