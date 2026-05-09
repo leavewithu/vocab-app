@@ -510,6 +510,109 @@
       line-height: 1.35;
     }
 
+    .spelling-box {
+      display: grid;
+      gap: 10px;
+      max-width: 760px;
+      margin: 18px auto 0;
+      padding: 14px 16px;
+      border-radius: var(--radius);
+      background: #f8fbff;
+      border: 1px solid var(--line);
+      text-align: left;
+    }
+
+    .spelling-title {
+      color: var(--blue);
+      font-size: 18px;
+      font-weight: 950;
+    }
+
+    .spelling-row {
+      display: grid;
+      grid-template-columns: minmax(74px, auto) minmax(86px, 1fr) auto;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sound-label {
+      color: var(--muted);
+      font-size: 18px;
+      font-weight: 900;
+    }
+
+    .chunk-text {
+      display: inline-flex;
+      align-items: center;
+      min-height: 42px;
+      border-radius: 999px;
+      padding: 5px 14px;
+      background: var(--green-soft);
+      color: var(--green);
+      font-size: 21px;
+      font-weight: 950;
+      letter-spacing: 0;
+    }
+
+    .spelling-practice {
+      display: grid;
+      gap: 12px;
+      width: 100%;
+      padding: 16px;
+      border-radius: var(--radius);
+      background: #f8fbff;
+      border: 1px solid var(--line);
+      color: var(--ink);
+    }
+
+    .spelling-practice-row {
+      display: grid;
+      grid-template-columns: minmax(72px, auto) minmax(82px, auto) 60px 1fr;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .spelling-practice-row input {
+      min-height: 56px;
+      font-size: 22px;
+      font-weight: 900;
+    }
+
+    .spelling-practice-row.recall {
+      grid-template-columns: minmax(72px, auto) minmax(82px, auto) 60px 1fr;
+    }
+
+    .chunk-mask, .chunk-locked {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      border-radius: 999px;
+      padding: 5px 14px;
+      font-size: 18px;
+      font-weight: 950;
+      letter-spacing: 0;
+    }
+
+    .chunk-mask {
+      border: 2px dashed #bcd2f3;
+      color: var(--muted);
+      background: #fff;
+    }
+
+    .chunk-locked {
+      color: var(--green);
+      background: #ecfff5;
+      border: 2px solid #bcebd0;
+    }
+
+    .spelling-status {
+      min-height: 28px;
+      color: var(--muted);
+      font-size: 17px;
+      font-weight: 850;
+    }
+
     .hint {
       margin-top: 14px;
       color: var(--muted);
@@ -710,8 +813,12 @@
         flex-direction: column;
       }
 
-      .manager-grid, .word-row, .answer-line, .test-row {
+      .manager-grid, .word-row, .answer-line, .test-row, .spelling-practice-row {
         grid-template-columns: 1fr;
+      }
+
+      .spelling-row {
+        grid-template-columns: 1fr auto;
       }
 
       .day-controls {
@@ -827,6 +934,7 @@
             <button id="stage2ToStage1" class="ghost">1단계로</button>
             <button id="stage2RestartAllTop" class="ghost">전체 2단계</button>
             <button id="stage2WeakOnly" class="ghost">오답만</button>
+            <button id="stage2TroubleChunks" class="ghost">헷갈린 조각</button>
             <button id="resetStage2Misses" class="ghost">2단계 틀린 기록 초기화</button>
             <button id="stage2ToStage3" class="ghost">3단계로</button>
             <button class="ghost homeBtn">홈</button>
@@ -1031,6 +1139,36 @@
       }
     };
 
+    const spellingChunksByDay = {
+      33: {
+        device: [["디", "de"], ["바", "vi"], ["이스", "ce"]],
+        function: [["펑크", "func"], ["션", "tion"]],
+        operate: [["오", "o"], ["퍼", "per"], ["레이트", "ate"]],
+        convenient: [["컨", "con"], ["비", "ve"], ["니", "ni"], ["언트", "ent"]],
+        repair: [["리", "re"], ["페어", "pair"]],
+        electronic: [["일", "e"], ["렉", "lec"], ["트로", "tro"], ["닉", "nic"]],
+        provide: [["프로", "pro"], ["바이드", "vide"]],
+        inspect: [["인", "in"], ["스펙트", "spect"]],
+        manual: [["매", "ma"], ["뉴", "nu"], ["얼", "al"]],
+        enable: [["이", "en"], ["네이", "a"], ["블", "ble"]],
+        mobile: [["모", "mo"], ["바일", "bile"]],
+        wireless: [["와이어", "wire"], ["리스", "less"]],
+        obtain: [["업", "ob"], ["테인", "tain"]],
+        perform: [["퍼", "per"], ["폼", "form"]],
+        delete: [["디", "de"], ["리트", "lete"]],
+        save: [["세이브", "save"]],
+        install: [["인", "in"], ["스톨", "stall"]],
+        virtual: [["버", "vir"], ["추", "tu"], ["얼", "al"]],
+        virus: [["바이", "vi"], ["러스", "rus"]],
+        drag: [["드래그", "drag"]],
+        code: [["코드", "code"]],
+        access: [["액", "ac"], ["세스", "cess"]],
+        link: [["링크", "link"]],
+        "out of order": [["아웃", "out"], ["오브", "of"], ["오더", "order"]],
+        "prevent a from -ing": [["프리", "pre"], ["벤트", "vent"], ["에이", "a"], ["프럼", "from"], ["잉", "-ing"]]
+      }
+    };
+
     const state = {
       words: [],
       progress: {
@@ -1053,6 +1191,7 @@
       stage2AutoAdvance: true,
       stage2LimitIds: null,
       stage2NextStage3Ids: null,
+      spellingReviewQueue: [],
       stage3LimitIds: null
     };
 
@@ -1073,6 +1212,7 @@
         pronunciation: details.pronunciation || "",
         example: details.example || "",
         exampleKo: details.exampleKo || "",
+        spellingChunks: Array.isArray(details.spellingChunks) ? details.spellingChunks : [],
         stage1Pass: false,
         stage1Missed: false,
         stage1MissCount: 0,
@@ -1080,6 +1220,7 @@
         stage2MissCount: 0,
         stage2ReviewNeeded: false,
         stage2LastWrongAnswer: "",
+        spellingTroubleChunks: [],
         stage2Count: 0,
         stage2Pass: false
       };
@@ -1129,7 +1270,8 @@
         const [korean, english] = entry;
         state.words.push(makeWord(day, korean, english, {
           ...detailsFromEntry(entry),
-          partsOfSpeech: getSeedPartsOfSpeech(day, english)
+          partsOfSpeech: getSeedPartsOfSpeech(day, english),
+          spellingChunks: getSeedSpellingChunks(day, english)
         }));
       });
     }
@@ -1153,6 +1295,7 @@
         word.pronunciation = details.pronunciation;
         word.example = details.example;
         word.exampleKo = details.exampleKo;
+        word.spellingChunks = getSeedSpellingChunks(dayNumber, english);
         return word;
       });
       const extras = existing.filter((word) => !used.has(word));
@@ -1182,12 +1325,18 @@
         word.pronunciation = details.pronunciation;
         word.example = details.example;
         word.exampleKo = details.exampleKo;
+        word.spellingChunks = getSeedSpellingChunks(day, english);
       });
     }
 
     function getSeedPartsOfSpeech(day, english) {
       const key = String(english || "").toLowerCase();
       return [...((partsOfSpeechByDay[Number(day)] || {})[key] || [])];
+    }
+
+    function getSeedSpellingChunks(day, english) {
+      const key = String(english || "").toLowerCase();
+      return ((spellingChunksByDay[Number(day)] || {})[key] || []).map(([sound, chunk]) => ({ sound, chunk }));
     }
 
     function detailsFromEntry(entry) {
@@ -1210,12 +1359,16 @@
           pronunciation: typeof word.pronunciation === "string" ? word.pronunciation : "",
           example: typeof word.example === "string" ? word.example : "",
           exampleKo: typeof word.exampleKo === "string" ? word.exampleKo : "",
+          spellingChunks: Array.isArray(word.spellingChunks) ? word.spellingChunks : [],
           stage1Missed: count > 0,
           stage1MissCount: count,
           stage2Missed: stage2MissCount > 0,
           stage2MissCount,
           stage2ReviewNeeded: typeof word.stage2ReviewNeeded === "boolean" ? word.stage2ReviewNeeded : stage2MissCount > 0,
-          stage2LastWrongAnswer: typeof word.stage2LastWrongAnswer === "string" ? word.stage2LastWrongAnswer : ""
+          stage2LastWrongAnswer: typeof word.stage2LastWrongAnswer === "string" ? word.stage2LastWrongAnswer : "",
+          spellingTroubleChunks: Array.isArray(word.spellingTroubleChunks)
+            ? word.spellingTroubleChunks.map((index) => Number(index)).filter((index) => Number.isInteger(index) && index >= 0)
+            : []
         };
       });
     }
@@ -1349,10 +1502,12 @@
       const words = wordsForDay();
       const stage1WeakCount = getWeakStage1Targets(words).length;
       const stage2WeakCount = getWeakStage2Targets(wordsForDay()).length;
+      const spellingTroubleCount = getSpellingTroubleCount(words);
       const stage3WrongCount = getStage3WrongTargets(words).length;
       const stage1ToStage2 = $("stage1ToStage2");
       const stage2ToStage3 = $("stage2ToStage3");
       const stage2WeakOnly = $("stage2WeakOnly");
+      const stage2TroubleChunks = $("stage2TroubleChunks");
       const resetStage1Misses = $("resetStage1Misses");
       const resetStage2Misses = $("resetStage2Misses");
       const resetStage3Misses = $("resetStage3Misses");
@@ -1361,6 +1516,10 @@
       if (stage2WeakOnly) {
         stage2WeakOnly.disabled = !stage2WeakCount;
         stage2WeakOnly.textContent = `오답만 (${stage2WeakCount})`;
+      }
+      if (stage2TroubleChunks) {
+        stage2TroubleChunks.disabled = !spellingTroubleCount;
+        stage2TroubleChunks.textContent = `헷갈린 조각 (${spellingTroubleCount})`;
       }
       if (resetStage1Misses) {
         resetStage1Misses.disabled = !stage1WeakCount;
@@ -1590,9 +1749,18 @@
           speakExample(word);
         });
       }
+      document.querySelectorAll("#stage1Content .chunk-speaker").forEach((button) => {
+        button.addEventListener("click", (event) => {
+          event.stopPropagation();
+          speakSpellingChunk(button.dataset.sound || "");
+        });
+      });
       if (!canSpeak()) {
         $("listenBtn").disabled = true;
         if (exampleListenBtn) exampleListenBtn.disabled = true;
+        document.querySelectorAll("#stage1Content .chunk-speaker").forEach((button) => {
+          button.disabled = true;
+        });
         $("voiceNote").textContent = "이 브라우저에서는 음성 듣기를 지원하지 않아요.";
       }
       $("knowBtn").addEventListener("click", () => {
@@ -1617,6 +1785,7 @@
 
     function getStage1StudyInfo(word) {
       const pronunciation = word.pronunciation ? `<div class="pronunciation">${escapeHtml(word.pronunciation)}</div>` : "";
+      const spelling = getSpellingChunksHtml(word);
       const example = word.example ? `
         <div class="example-box">
           <div class="example-top">
@@ -1626,7 +1795,30 @@
           ${word.exampleKo ? `<div class="example-ko">${escapeHtml(word.exampleKo)}</div>` : ""}
         </div>
       ` : "";
-      return pronunciation || example ? `${pronunciation}${example}` : "";
+      return pronunciation || spelling || example ? `${pronunciation}${spelling}${example}` : "";
+    }
+
+    function getSpellingChunksHtml(word) {
+      const chunks = getSpellingChunks(word);
+      if (!chunks.length) return "";
+      return `
+        <div class="spelling-box">
+          <div class="spelling-title">스펠링 쪼개기</div>
+          ${chunks.map((item) => `
+            <div class="spelling-row">
+              <span class="sound-label">${escapeHtml(item.sound)}</span>
+              <span class="chunk-text">${escapeHtml(item.chunk)}</span>
+              <button class="ghost speaker-btn chunk-speaker" type="button" data-sound="${escapeHtml(item.sound)}" aria-label="${escapeHtml(item.sound)} 듣기">🔊</button>
+            </div>
+          `).join("")}
+        </div>
+      `;
+    }
+
+    function getSpellingChunks(word) {
+      return Array.isArray(word && word.spellingChunks)
+        ? word.spellingChunks.filter((item) => item && item.sound && item.chunk)
+        : [];
     }
 
     function canSpeak() {
@@ -1646,6 +1838,11 @@
     function speakExample(word) {
       if (!word || !word.example || !canSpeak()) return;
       speakText(word.example, "en-US", "영어 예문을 읽어주는 중이에요.", 0.9);
+    }
+
+    function speakSpellingChunk(sound) {
+      if (!sound || !canSpeak()) return;
+      speakText(sound, "ko-KR", "소리 조각을 읽어주는 중이에요.", 1.1);
     }
 
     function speakText(text, lang, message, rate) {
@@ -1851,6 +2048,29 @@
         .sort((a, b) => Number(b.stage2MissCount || 0) - Number(a.stage2MissCount || 0));
     }
 
+    function getSpellingTroubleIndexes(word) {
+      return getSelectedChunkIndexes(word, word.spellingTroubleChunks || []);
+    }
+
+    function getSpellingTroubleWords(words = wordsForDay()) {
+      return words.filter((word) => getSpellingTroubleIndexes(word).length > 0);
+    }
+
+    function getSpellingTroubleCount(words = wordsForDay()) {
+      return getSpellingTroubleWords(words).reduce((sum, word) => sum + getSpellingTroubleIndexes(word).length, 0);
+    }
+
+    function addSpellingTroubles(word, indexes) {
+      const validIndexes = getSelectedChunkIndexes(word, indexes);
+      if (!validIndexes.length) return;
+      word.spellingTroubleChunks = [...new Set([...(word.spellingTroubleChunks || []), ...validIndexes])];
+    }
+
+    function clearSpellingTroubles(word, indexes) {
+      const done = new Set(getSelectedChunkIndexes(word, indexes));
+      word.spellingTroubleChunks = getSpellingTroubleIndexes(word).filter((index) => !done.has(index));
+    }
+
     function resetStage2MissRecords() {
       const targets = getWeakStage2Targets();
       if (!targets.length) return;
@@ -1861,6 +2081,7 @@
         word.stage2MissCount = 0;
         word.stage2ReviewNeeded = false;
         word.stage2LastWrongAnswer = "";
+        word.spellingTroubleChunks = [];
       });
       state.stage2LimitIds = null;
       state.stage2NextStage3Ids = null;
@@ -1881,6 +2102,74 @@
       const targets = getWeakStage2Targets();
       if (!targets.length) return;
       startStage2ReviewLoop(targets);
+    }
+
+    function startSpellingTroubleReview() {
+      const targets = getSpellingTroubleWords();
+      if (!targets.length) return;
+      state.progress.currentStage = 2;
+      state.spellingReviewQueue = targets.map((word) => word.id);
+      saveData();
+      showScreen("stage2Screen");
+      nextSpellingTroubleWord();
+    }
+
+    function nextSpellingTroubleWord() {
+      updateStageNavButtons();
+      const words = wordsForDay();
+      const totalTroubles = getSpellingTroubleCount(words);
+      $("stage2Meta").textContent = `Day ${state.progress.currentDay} · 헷갈린 조각 복습 · ${totalTroubles}개 남음`;
+      $("stage2Progress").style.width = totalTroubles ? "20%" : "100%";
+      renderStageBar("stage2Bar", 2);
+
+      state.spellingReviewQueue = state.spellingReviewQueue.filter((id) => {
+        const word = state.words.find((item) => item.id === id);
+        return word && getSpellingTroubleIndexes(word).length;
+      });
+
+      if (!state.spellingReviewQueue.length) {
+        $("stage2Content").innerHTML = `
+          <div class="panel celebration stack">
+            <div>
+              <div class="score">헷갈린 조각 복습 완료! 🎉</div>
+              <p class="muted">저장된 스펠링 조각을 모두 다시 맞혔어요.</p>
+            </div>
+            <div class="actions">
+              <button id="troubleReviewHome" class="success">홈으로</button>
+              <button id="troubleReviewStage2" class="ghost">2단계로 이동</button>
+            </div>
+          </div>
+        `;
+        $("troubleReviewHome").addEventListener("click", renderHome);
+        $("troubleReviewStage2").addEventListener("click", () => startStage2(null, false));
+        return;
+      }
+
+      const word = state.words.find((item) => item.id === state.spellingReviewQueue.shift());
+      const indexes = getSpellingTroubleIndexes(word);
+      $("stage2Content").innerHTML = `
+        <div class="question-box">
+          <div class="korean-large">${escapeHtml(word.korean)}</div>
+          <div id="stage2Feedback" class="feedback bad">
+            <span>헷갈렸던 부분만 다시 써보세요.</span>
+            ${getStage2SpellingPracticeHtml(
+              word,
+              "헷갈린 조각 다시하기",
+              "맞은 조각은 보여주고, 저장된 헷갈린 조각만 다시 써보세요.",
+              false,
+              indexes,
+              true
+            )}
+          </div>
+        </div>
+      `;
+      setupStage2SpellingPractice({
+        onComplete: () => {
+          clearSpellingTroubles(word, indexes);
+          saveData();
+          nextSpellingTroubleWord();
+        }
+      });
     }
 
     function getStage3WrongTargets(words = wordsForDay()) {
@@ -1933,16 +2222,6 @@
       state.stage3LimitIds = null;
       saveData();
       startStage3();
-    }
-
-    function getStage2ConfusionNote(word) {
-      const wrong = (word.stage2LastWrongAnswer || "").trim();
-      if (!wrong) return "";
-      const confusedWord = wordsForDay().find((item) => item.id !== word.id && item.english === wrong);
-      if (confusedWord) {
-        return `지난번에 "${escapeHtml(wrong)}"라고 썼어요. "${escapeHtml(wrong)}"는 "${escapeHtml(confusedWord.korean)}" 뜻이에요.`;
-      }
-      return `지난번에 "${escapeHtml(wrong)}"라고 썼던 단어예요. 뜻을 보고 천천히 다시 떠올려요.`;
     }
 
     function getStage2WrongHelp(word, answer) {
@@ -2020,16 +2299,16 @@
       const word = state.words.find((item) => item.id === state.stage2Current);
       const missLabel = getStage2MissLabel(word);
       const missBadge = missLabel ? `<div class="miss-badge">${missLabel}</div>` : "";
-      const confusionNote = getStage2ConfusionNote(word);
       $("stage2Content").innerHTML = `
         <div class="question-box">
           ${missBadge}
           <div class="korean-large">${escapeHtml(word.korean)}</div>
-          ${confusionNote ? `<div class="confusion-note">${confusionNote}</div>` : ""}
-          <div class="timer-note">빠르게 떠올리면 한 번에 통과</div>
-          <div class="answer-line">
-            <input id="stage2Answer" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="English answer">
-            <button id="stage2Check">확인</button>
+          <div id="stage2PromptControls" class="stack">
+            <div class="timer-note">빠르게 떠올리면 한 번에 통과</div>
+            <div class="answer-line">
+              <input id="stage2Answer" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="English answer">
+              <button id="stage2Check">확인</button>
+            </div>
           </div>
           <div id="stage2Feedback" class="feedback" hidden></div>
         </div>
@@ -2039,6 +2318,180 @@
       $("stage2Answer").addEventListener("keydown", (event) => {
         if (event.key === "Enter") checkStage2Answer();
       });
+    }
+
+    function getStage2SpellingPracticeHtml(word, title = "스펠링 조각 먼저 따라쓰기", status = "조각을 맞게 쓰면 전체 단어 입력이 열려요.", showChunks = true, indexes = null, showAllRows = false) {
+      const chunks = getSpellingChunks(word);
+      const editableIndexes = getSelectedChunkIndexes(word, indexes);
+      const editableSet = new Set(editableIndexes);
+      const displayIndexes = showAllRows ? chunks.map((_, index) => index) : editableIndexes;
+      const displayChunks = displayIndexes.map((index) => ({ ...chunks[index], originalIndex: index }));
+      if (!displayChunks.length || !editableIndexes.length) return "";
+      return `
+        <div class="spelling-practice" id="stage2SpellingPractice">
+          <div class="spelling-title">${escapeHtml(title)}</div>
+          ${displayChunks.map((item) => {
+            const isEditable = editableSet.has(item.originalIndex);
+            const chunkDisplay = showChunks || !isEditable
+              ? `<span class="chunk-text">${escapeHtml(item.chunk)}</span>`
+              : `<span class="chunk-mask">가림</span>`;
+            const inputOrLocked = isEditable
+              ? `<input class="chunk-copy-input" data-index="${item.originalIndex}" data-answer="${escapeHtml(item.chunk)}" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="${showChunks ? `${escapeHtml(item.chunk)} 따라쓰기` : "스펠링 쓰기"}">`
+              : `<span class="chunk-locked">통과</span>`;
+            return `
+            <div class="spelling-practice-row ${showChunks ? "" : "recall"} ${isEditable ? "" : "locked"}">
+              <span class="sound-label">${escapeHtml(item.sound)}</span>
+              ${chunkDisplay}
+              <button class="ghost speaker-btn chunk-speaker" type="button" data-sound="${escapeHtml(item.sound)}" aria-label="${escapeHtml(item.sound)} 듣기">🔊</button>
+              ${inputOrLocked}
+            </div>
+          `;
+          }).join("")}
+          <button id="checkSpellingChunks" class="ghost" type="button">조각 따라쓰기 확인</button>
+          <div id="spellingChunkStatus" class="spelling-status">${escapeHtml(status)}</div>
+        </div>
+      `;
+    }
+
+    function getSelectedChunkIndexes(word, indexes = null) {
+      const chunks = getSpellingChunks(word);
+      if (!Array.isArray(indexes) || !indexes.length) return chunks.map((_, index) => index);
+      return [...new Set(indexes.map((index) => Number(index)))]
+        .filter((index) => Number.isInteger(index) && index >= 0 && index < chunks.length);
+    }
+
+    function normalizeSpellingText(value) {
+      return String(value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+    }
+
+    function getWrongSpellingChunkIndexes(word, answer) {
+      const chunks = getSpellingChunks(word);
+      if (!chunks.length) return [];
+      const normalizedAnswer = normalizeSpellingText(answer);
+      if (!normalizedAnswer) return chunks.map((_, index) => index);
+
+      let cursor = 0;
+      const wrongIndexes = [];
+      const answerParts = [];
+      const correctParts = [];
+      chunks.forEach((item, index) => {
+        const correct = normalizeSpellingText(item.chunk);
+        correctParts.push(correct);
+        const answerPart = normalizedAnswer.slice(cursor, cursor + correct.length);
+        answerParts.push(answerPart);
+        if (answerPart !== correct) wrongIndexes.push(index);
+        cursor += correct.length;
+      });
+      if (cursor < normalizedAnswer.length && wrongIndexes.length) return focusLikelyTroubleChunk(wrongIndexes, answerParts, correctParts, normalizedAnswer);
+      if (cursor < normalizedAnswer.length) wrongIndexes.push(chunks.length - 1);
+      return wrongIndexes.length ? focusLikelyTroubleChunk(wrongIndexes, answerParts, correctParts, normalizedAnswer) : [];
+    }
+
+    function focusLikelyTroubleChunk(wrongIndexes, answerParts, correctParts, normalizedAnswer) {
+      const correctWord = correctParts.join("");
+      if (normalizedAnswer.length !== correctWord.length || wrongIndexes.length <= 1) {
+        return wrongIndexes;
+      }
+
+      const focused = [];
+      let group = [];
+      const flushGroup = () => {
+        if (!group.length) return;
+        const canFocusLast = group.length > 1 && group[0] > 0 && group.slice(0, -1).every((index) => {
+          const answerPart = answerParts[index] || "";
+          const correctPart = correctParts[index] || "";
+          return answerPart.charAt(0) && answerPart.charAt(0) === correctPart.charAt(0);
+        });
+        if (canFocusLast) focused.push(group[group.length - 1]);
+        else focused.push(...group);
+        group = [];
+      };
+
+      wrongIndexes.forEach((index) => {
+        if (!group.length || index === group[group.length - 1] + 1) {
+          group.push(index);
+        } else {
+          flushGroup();
+          group.push(index);
+        }
+      });
+      flushGroup();
+      return [...new Set(focused)];
+    }
+
+    function setupStage2SpellingPractice(options = {}) {
+      const settings = {
+        answerInputId: "stage2Answer",
+        answerButtonId: "stage2Check",
+        successText: "좋아요. 이제 전체 단어를 가리고 써보세요.",
+        onComplete: null,
+        ...options
+      };
+      const inputs = [...document.querySelectorAll(".chunk-copy-input")];
+      const status = $("spellingChunkStatus");
+      document.querySelectorAll("#stage2Content .chunk-speaker").forEach((button) => {
+        button.addEventListener("click", () => speakSpellingChunk(button.dataset.sound || ""));
+      });
+      if (!canSpeak()) {
+        document.querySelectorAll("#stage2Content .chunk-speaker").forEach((button) => {
+          button.disabled = true;
+        });
+      }
+      inputs.forEach((input, index) => {
+        blockPasteInput(input, status);
+        input.addEventListener("keydown", (event) => {
+          if (event.key !== "Enter") return;
+          event.preventDefault();
+          const nextInput = inputs[index + 1];
+          if (nextInput) nextInput.focus();
+          else checkStage2SpellingChunks(settings);
+        });
+      });
+      $("checkSpellingChunks").addEventListener("click", () => checkStage2SpellingChunks(settings));
+      if (inputs[0]) inputs[0].focus();
+    }
+
+    function checkStage2SpellingChunks(settings = {}) {
+      const options = {
+        answerInputId: "stage2Answer",
+        answerButtonId: "stage2Check",
+        successText: "좋아요. 이제 전체 단어를 가리고 써보세요.",
+        onComplete: null,
+        ...settings
+      };
+      const inputs = [...document.querySelectorAll(".chunk-copy-input")];
+      const status = $("spellingChunkStatus");
+      const firstWrong = inputs.find((input) => input.value.trim().toLowerCase() !== input.dataset.answer.toLowerCase());
+      if (firstWrong) {
+        if (status) {
+          status.hidden = false;
+          status.textContent = "틀린 조각이 있어요. 입력칸이 열린 조각만 다시 써보세요.";
+          status.style.color = "#b42318";
+        }
+        firstWrong.focus();
+        firstWrong.select();
+        return;
+      }
+      inputs.forEach((input) => {
+        input.disabled = true;
+      });
+      const checkButton = $("checkSpellingChunks");
+      if (checkButton) checkButton.disabled = true;
+      if (typeof options.onComplete === "function") {
+        options.onComplete();
+        return;
+      }
+      const answerInput = $(options.answerInputId);
+      const answerButton = $(options.answerButtonId);
+      if (!answerInput || !answerButton) return;
+      answerInput.disabled = false;
+      answerButton.disabled = false;
+      if (status) {
+        status.textContent = options.successText;
+        status.style.color = "var(--green)";
+      }
+      state.stage2StartedAt = Date.now();
+      answerInput.focus();
     }
 
     function checkStage2Answer() {
@@ -2067,24 +2520,80 @@
         word.stage2ReviewNeeded = true;
         if (answer) word.stage2LastWrongAnswer = answer;
         state.stage2Queue.push(word.id);
+        const promptControls = $("stage2PromptControls");
+        if (promptControls) promptControls.hidden = true;
         feedback.hidden = false;
         feedback.className = "feedback bad";
-        feedback.innerHTML = `
-          <span>❌ ${getStage2WrongHelp(word, answer)} · 정답: ${escapeHtml(word.english)}</span>
-          <div class="answer-line" style="width:100%;">
-            <input id="stage2CopyAnswer" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="정답 따라쓰기">
-            <button id="stage2CopyCheck" class="danger">따라쓰기 확인</button>
-          </div>
-          <div id="stage2CopyNotice" class="copy-feedback" hidden>붙여넣기 없이 직접 써보세요.</div>
-        `;
+        const wrongChunkIndexes = getWrongSpellingChunkIndexes(word, answer);
+        addSpellingTroubles(word, wrongChunkIndexes);
+        const spellingPractice = getStage2SpellingPracticeHtml(
+          word,
+          "1단계: 보고 따라쓰기",
+          "맞은 조각은 통과로 두고, 틀린 조각만 다시 써보세요.",
+          true,
+          wrongChunkIndexes,
+          true
+        );
+        const needsSpellingPractice = Boolean(spellingPractice);
+        if (needsSpellingPractice) {
+          feedback.innerHTML = `
+            <span>❌ 스펠링을 쪼개서 다시 잡아볼게요.</span>
+            ${spellingPractice}
+          `;
+        } else {
+          renderStage2WholeCopy(word);
+        }
         saveData();
-        blockPasteInput($("stage2CopyAnswer"), $("stage2CopyNotice"));
-        $("stage2CopyAnswer").focus();
-        $("stage2CopyCheck").addEventListener("click", () => checkStage2CopyAnswer(word));
-        $("stage2CopyAnswer").addEventListener("keydown", (event) => {
-          if (event.key === "Enter") checkStage2CopyAnswer(word);
-        });
+        if (needsSpellingPractice) {
+          setupStage2SpellingPractice({
+            onComplete: () => renderStage2ChunkRecall(word, wrongChunkIndexes)
+          });
+        }
       }
+    }
+
+    function renderStage2ChunkRecall(word, indexes = null, onComplete = null) {
+      const feedback = $("stage2Feedback");
+      feedback.className = "feedback bad";
+      feedback.innerHTML = `
+        <span>좋아요. 이제 스펠링을 가리고, 소리만 보고 조각을 써보세요.</span>
+        ${getStage2SpellingPracticeHtml(
+          word,
+          "2단계: 소리만 보고 조각 쓰기",
+          "맞은 조각은 보여주고, 헷갈린 조각만 가린 채 다시 써보세요.",
+          false,
+          indexes,
+          true
+        )}
+      `;
+      setupStage2SpellingPractice({
+        onComplete: () => {
+          if (typeof onComplete === "function") {
+            onComplete();
+          } else {
+            renderStage2WholeCopy(word);
+          }
+        }
+      });
+    }
+
+    function renderStage2WholeCopy(word) {
+      const feedback = $("stage2Feedback");
+      feedback.className = "feedback bad";
+      feedback.innerHTML = `
+        <span>3단계: 이제 전체 단어를 한 번 써보세요.</span>
+        <div class="answer-line" style="width:100%;">
+          <input id="stage2CopyAnswer" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="전체 단어 쓰기">
+          <button id="stage2CopyCheck" class="danger">전체 단어 확인</button>
+        </div>
+        <div id="stage2CopyNotice" class="copy-feedback" hidden>붙여넣기 없이 직접 써보세요.</div>
+      `;
+      blockPasteInput($("stage2CopyAnswer"), $("stage2CopyNotice"));
+      $("stage2CopyAnswer").focus();
+      $("stage2CopyCheck").addEventListener("click", () => checkStage2CopyAnswer(word));
+      $("stage2CopyAnswer").addEventListener("keydown", (event) => {
+        if (event.key === "Enter") checkStage2CopyAnswer(word);
+      });
     }
 
     function checkStage2CopyAnswer(word) {
@@ -2093,11 +2602,25 @@
       const feedback = $("stage2Feedback");
       if (!copyInput || !copyButton || !word) return;
       if (copyInput.value.trim().toLowerCase() !== word.english) {
-        feedback.className = "feedback bad";
-        copyInput.focus();
-        copyInput.select();
+        const wrongIndexes = getWrongSpellingChunkIndexes(word, copyInput.value);
+        addSpellingTroubles(word, wrongIndexes);
+        saveData();
+        if (wrongIndexes.length) {
+          renderStage2ChunkRecall(word, wrongIndexes, () => {
+            clearSpellingTroubles(word, wrongIndexes);
+            saveData();
+            feedback.className = "feedback ok";
+            feedback.innerHTML = `<span>✅ 헷갈린 부분을 다시 잡았어요. 다음 단어로 가요.</span>`;
+            setTimeout(() => nextStage2Word(state.stage2AutoAdvance), 650);
+          });
+        } else {
+          feedback.className = "feedback bad";
+          copyInput.focus();
+          copyInput.select();
+        }
         return;
       }
+      clearSpellingTroubles(word, getSelectedChunkIndexes(word));
       copyInput.disabled = true;
       copyButton.disabled = true;
       feedback.className = "feedback ok";
@@ -2302,6 +2825,7 @@
     $("stage2ToStage1").addEventListener("click", () => startStage1());
     $("stage2RestartAllTop").addEventListener("click", restartStage2All);
     $("stage2WeakOnly").addEventListener("click", restartStage2WeakOnly);
+    $("stage2TroubleChunks").addEventListener("click", startSpellingTroubleReview);
     $("resetStage2Misses").addEventListener("click", resetStage2MissRecords);
     $("stage2ToStage3").addEventListener("click", () => startStage3());
     $("stage3ToStage2").addEventListener("click", () => startStage2(null, false));
