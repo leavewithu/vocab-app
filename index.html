@@ -149,6 +149,119 @@
       flex: 1 1 220px;
     }
 
+    .student-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .student-card {
+      min-height: 180px;
+      display: grid;
+      align-content: center;
+      gap: 10px;
+      text-align: left;
+      background: #fff;
+      color: var(--ink);
+      border: 2px solid var(--line);
+      box-shadow: var(--shadow);
+    }
+
+    .student-name {
+      font-size: 34px;
+      font-weight: 950;
+      color: var(--blue);
+    }
+
+    .student-desc {
+      color: var(--muted);
+      font-size: 18px;
+      font-weight: 800;
+      line-height: 1.35;
+    }
+
+    .student-status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .student-chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 42px;
+      border-radius: 999px;
+      padding: 8px 14px;
+      background: var(--blue-soft);
+      color: var(--blue);
+      font-size: 18px;
+      font-weight: 950;
+    }
+
+    .plan-panel {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .plan-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .plan-grid.compact-plan {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .plan-card {
+      display: grid;
+      align-content: space-between;
+      gap: 10px;
+      min-height: 160px;
+      text-align: left;
+      background: #fff;
+      color: var(--ink);
+      border: 2px solid var(--line);
+      box-shadow: none;
+    }
+
+    div.plan-card {
+      cursor: default;
+    }
+
+    .plan-card.primary-plan {
+      border-color: var(--blue);
+      background: var(--blue-soft);
+    }
+
+    .plan-title {
+      font-size: 22px;
+      font-weight: 950;
+    }
+
+    .plan-meta {
+      color: var(--muted);
+      font-size: 16px;
+      font-weight: 800;
+      line-height: 1.35;
+    }
+
+    .mini-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .mini-actions button {
+      min-height: 58px;
+      padding: 10px 12px;
+      font-size: 17px;
+    }
+
     .backup-status {
       min-height: 32px;
       color: var(--muted);
@@ -825,6 +938,10 @@
         grid-template-columns: 1fr;
       }
 
+      .student-grid, .plan-grid {
+        grid-template-columns: 1fr;
+      }
+
       .stage-actions {
         grid-template-columns: 1fr;
       }
@@ -845,18 +962,43 @@
 </head>
 <body>
   <main class="app">
-    <section id="homeScreen" class="screen active" aria-labelledby="homeTitle">
+    <section id="studentScreen" class="screen active" aria-labelledby="studentTitle">
+      <div class="topbar">
+        <div>
+          <h1 id="studentTitle">누가 공부할까요?</h1>
+          <p class="muted">단어장은 함께 쓰고, 진도는 각자 따로 저장돼요.</p>
+        </div>
+      </div>
+
+      <div class="student-grid">
+        <button id="selectKitae" class="student-card" data-student="kitae">
+          <span class="student-name">기태</span>
+          <span class="student-desc">10개씩 구간을 나눠서 차근차근 외워요.</span>
+        </button>
+        <button id="selectSiyoon" class="student-card" data-student="siyoon">
+          <span class="student-name">시윤</span>
+          <span class="student-desc">한 과 25개를 한 번에 쭉 외워요.</span>
+        </button>
+      </div>
+    </section>
+
+    <section id="homeScreen" class="screen" aria-labelledby="homeTitle">
       <div class="topbar">
         <div>
           <h1 id="homeTitle">단어 암기 앱</h1>
-          <p class="muted">Day별 단어를 3단계로 차근차근 외워요.</p>
+          <p id="homeSubtitle" class="muted">Day별 단어를 3단계로 차근차근 외워요.</p>
+        </div>
+        <div class="student-status">
+          <span id="currentStudentBadge" class="student-chip"></span>
+          <button id="changeStudentBtn" class="ghost">학생 바꾸기</button>
         </div>
       </div>
 
       <div class="stack">
         <div id="dayList" class="day-list"></div>
+        <div id="studyPlanPanel"></div>
         <div class="actions">
-          <button id="startDayBtn">Day 선택하여 학습 시작</button>
+          <button id="startDayBtn">선택한 단어장 학습 시작</button>
           <button id="managerBtn" class="secondary">단어 관리</button>
           <button id="backupBtn" class="ghost">진도 백업</button>
           <button id="restoreBtn" class="ghost">진도 불러오기</button>
@@ -870,7 +1012,7 @@
       <div class="topbar">
         <div>
           <h2 id="managerTitle">단어 관리</h2>
-          <p class="muted">Day 번호를 고르고 Korean → English 단어를 추가하세요.</p>
+          <p class="muted">Day 번호나 교과서 단원을 고르고 Korean → English 단어를 추가하세요.</p>
         </div>
         <button id="managerBackBtn" class="ghost">뒤로</button>
       </div>
@@ -878,10 +1020,10 @@
       <div class="stack">
         <div class="panel stack">
           <div class="field">
-            <label for="daySelect">Day 선택 또는 입력</label>
+            <label for="daySelect">Day / 교과서 단원 선택 또는 입력</label>
             <div class="day-controls">
               <select id="dayPreset" aria-label="Day dropdown"></select>
-              <input id="daySelect" type="number" min="1" max="100" inputmode="numeric" placeholder="새 Day 입력">
+              <input id="daySelect" type="number" min="1" max="999" inputmode="numeric" placeholder="새 Day 입력">
             </div>
           </div>
           <div class="manager-grid">
@@ -971,6 +1113,42 @@
   <script>
     const WORDS_KEY = "words";
     const PROGRESS_KEY = "progress";
+    const STUDENTS_KEY = "studentProgress";
+    const ACTIVE_STUDENT_KEY = "activeStudent";
+    const TEXTBOOK_31_DAY = 301;
+    const TEXTBOOK_32_DAY = 302;
+    const LEGACY_TEXTBOOK_31_DAY = 38;
+    const DAY_LABELS = {
+      38: "38과",
+      39: "39과",
+      40: "40과",
+      [TEXTBOOK_31_DAY]: "교과서 3-1",
+      [TEXTBOOK_32_DAY]: "교과서 3-2"
+    };
+    const STUDENTS = {
+      kitae: {
+        name: "기태",
+        mode: "split",
+        description: "10개씩 구간을 나눠서 학습"
+      },
+      siyoon: {
+        name: "시윤",
+        mode: "whole",
+        description: "한 과 25개를 한 번에 학습"
+      }
+    };
+    const WORD_PROGRESS_FIELDS = [
+      "stage1Pass",
+      "stage1Missed",
+      "stage1MissCount",
+      "stage2Missed",
+      "stage2MissCount",
+      "stage2ReviewNeeded",
+      "stage2LastWrongAnswer",
+      "spellingTroubleChunks",
+      "stage2Count",
+      "stage2Pass"
+    ];
 
     const sampleWords = [
       ["장치, 기구", "device", "[diváis]", "He invented a device for generating electricity.", "그는 전기를 발생시키는 장치를 발명했다."],
@@ -1112,6 +1290,146 @@
       ["~하기로 되어 있다, ~할 예정이다", "be supposed to", "", "The two leaders are supposed to meet in Singapore.", "두 지도자는 싱가포르에서 만나기로 되어 있다."]
     ];
 
+    const day38SiyoonWords = [
+      ["합법적인, 법으로 허용된; 법률의", "legal", "[lí:gəl]", "Alcohol is legal in most countries.", "술은 대부분의 국가에서 합법적이다.", ["siyoon"]],
+      ["불법의, 위법의", "illegal", "[ilí:gəl]", "In my country, it is illegal to own guns.", "우리나라에서 총기를 소지하는 것은 불법이다.", ["siyoon"]],
+      ["허가하다; 허가증", "permit", "[pərmít]", "Smoking is not permitted inside buildings.", "건물 내에서 흡연은 허용되지 않는다.", ["siyoon"]],
+      ["규제하다, 통제하다", "regulate", "[régjulèit]", "We need new rules to regulate fake news.", "우리는 가짜 뉴스를 규제할 새로운 규정들이 필요하다.", ["siyoon"]],
+      ["평등한, 동등한; 동일한, 같은", "equal", "[í:kwəl]", "Everyone is equal in the eyes of the law.", "모든 사람은 법의 관점에서 평등하다.", ["siyoon"]],
+      ["정의, 공정함", "justice", "[dʒʌ́stis]", "They're demanding equal rights and justice.", "그들은 동등한 권리와 정의를 요구하고 있다.", ["siyoon"]],
+      ["따르다, 복종하다", "obey", "[oubéi]", "Students should obey school rules.", "학생들은 교칙을 따라야 한다.", ["siyoon"]],
+      ["신념; 원칙, 원리", "principle", "[prínsəpl]", "It is against my principles to cheat during exams.", "시험 중에 부정행위를 하는 것은 내 신념에 어긋난다.", ["siyoon"]],
+      ["위반하다, 어기다; 침해하다", "violate", "[váiəlèit]", "The company violated the tax laws.", "그 회사는 세법을 위반했다.", ["siyoon"]],
+      ["증거(물), 증명", "proof", "[pru:f]", "Do you have any proof that she did it?", "그녀가 그것을 했다는 증거가 있나요?", ["siyoon"]],
+      ["의무; 직무, 임무", "duty", "[djú:ti]", "Citizens have a duty to obey the law.", "시민들은 법을 지킬 의무가 있다.", ["siyoon"]],
+      ["재판; 시험 사용, 체험", "trial", "[tráiəl]", "The trial will be open to the public.", "그 재판은 일반인에게 공개될 것이다.", ["siyoon"]],
+      ["고발하다, 고소하다", "accuse", "[əkjú:z]", "He was accused of stealing money.", "그는 돈을 훔친 혐의로 고발되었다.", ["siyoon"]],
+      ["(신원 등을) 확인하다, 알아보다", "identify", "[aidéntəfài]", "She was able to identify the robber.", "그녀는 그 강도를 알아볼 수 있었다.", ["siyoon"]],
+      ["(죄·잘못을) 자백하다", "confess", "[kənfés]", "He confessed that he stole the necklace.", "그는 자신이 그 목걸이를 훔쳤다고 자백했다.", ["siyoon"]],
+      ["목격자, 증인; 목격하다", "witness", "[wítnis]", "Peter is the only witness to the accident.", "Peter는 그 사고의 유일한 목격자이다.", ["siyoon"]],
+      ["적절한, 올바른", "proper", "[prɑ́pər]", "Did the police gather evidence in the proper way?", "경찰은 올바른 방법으로 증거를 수집했나요?", ["siyoon"]],
+      ["무죄의, 결백한", "innocent", "[ínəsənt]", "We believe that he is innocent.", "우리는 그가 결백하다고 믿는다.", ["siyoon"]],
+      ["죄책감이 드는; 유죄의", "guilty", "[gílti]", "Amy felt guilty about lying to her parents.", "Amy는 부모님께 거짓말한 것에 대해 죄책감을 느꼈다.", ["siyoon"]],
+      ["인정하다, 시인하다", "admit", "[ədmít]", "He admitted his mistake and apologized.", "그는 그의 실수를 인정하고 사과했다.", ["siyoon"]],
+      ["처벌하다, 벌주다", "punish", "[pʌ́niʃ]", "They will be punished according to the law.", "그들은 법에 따라 처벌될 것이다.", ["siyoon"]],
+      ["호소, 간청; 매력; 호소[간청]하다; 관심[매력]을 끌다", "appeal", "[əpí:l]", "The police are making an appeal for information.", "경찰은 제보를 호소하고 있다.", ["siyoon"]],
+      ["석방하다, 풀어 주다; 개봉하다, 발매하다", "release", "[rilí:s]", "The judge released the prisoner.", "판사가 죄수를 풀어 주었다.", ["siyoon"]],
+      ["~을 열망하다, ~을 갈망하다", "long for", "", "They longed for a peaceful world.", "그들은 평화로운 세상을 갈망했다.", ["siyoon"]],
+      ["~에 상관없이", "regardless of", "", "All people have equal rights regardless of race, religion, or gender.", "모든 사람은 인종, 종교, 성별에 관계없이 동등한 권리를 갖는다.", ["siyoon"]]
+    ];
+
+    const day39SiyoonWords = [
+      ["국가의, 전국적인; 국립의", "national", "[nǽʃənl]", "Children's Day is a national holiday.", "어린이날은 국가의 공휴일이다.", ["siyoon"]],
+      ["정부", "government", "[gʌ́vərnmənt]", "The government responded quickly to the disaster.", "정부는 재난에 빠르게 대응했다.", ["siyoon"]],
+      ["공화국", "republic", "[ripʌ́blik]", "He was the president of the Czech Republic.", "그는 체코 공화국의 대통령이었다.", ["siyoon"]],
+      ["권한, 지휘권", "authority", "[əθɔ́:rəti]", "I don't have the authority to change the schedule.", "나는 일정을 변경할 권한을 갖고 있지 않다.", ["siyoon"]],
+      ["국내의; 가정의", "domestic", "[dəméstik]", "Passengers on domestic flights don't have to carry a passport.", "국내선 탑승객은 여권을 소지할 필요가 없다.", ["siyoon"]],
+      ["시민의, 민간의", "civil", "[sívəl]", "They continued to fight for civil rights.", "그들은 시민의 권리를 위한 투쟁을 계속했다.", ["siyoon"]],
+      ["독립된, 독립적인", "independent", "[ìndipéndənt]", "The country became independent from France.", "그 나라는 프랑스로부터 독립되었다.", ["siyoon"]],
+      ["민족의", "ethnic", "[éθnik]", "Ethnic conflict is the biggest issue in the country.", "민족 분쟁은 그 나라의 가장 큰 문제이다.", ["siyoon"]],
+      ["공식적인, 공적인; 공무원, 관리", "official", "[əfíʃəl]", "The official announcement will be made tomorrow.", "공식적인 발표는 내일 있을 것이다.", ["siyoon"]],
+      ["알아내다; 결정하다", "determine", "[ditə́:rmin]", "It's difficult to determine the cause of the accident.", "그 사고의 원인을 알아내기는 어렵다.", ["siyoon"]],
+      ["대통령; (조직·단체의) 장", "president", "[prézidənt]", "Who is the current president of the United States?", "미국의 현 대통령은 누구인가요?", ["siyoon"]],
+      ["시장", "mayor", "[mέiər]", "She became the first female mayor of London.", "그녀는 런던 최초의 여성 시장이 되었다.", ["siyoon"]],
+      ["이전의, 과거의", "former", "[fɔ́:rmər]", "She was an advisor to the former president.", "그녀는 전 대통령의 고문이었다.", ["siyoon"]],
+      ["통합하다, 통일하다", "unify", "[jú:nifài]", "Many leaders have tried to unify the country.", "많은 지도자들이 그 나라를 통합하려고 노력해왔다.", ["siyoon"]],
+      ["의회, 협의회", "council", "[káunsəl]", "The city council decided to build a new city hall.", "시 의회는 새 시청사를 짓기로 결정했다.", ["siyoon"]],
+      ["예산, 비용", "budget", "[bʌ́dʒit]", "The government will increase the budget for education.", "정부는 교육 예산을 늘릴 것이다.", ["siyoon"]],
+      ["제한하다, 통제하다", "restrict", "[ristríkt]", "The city restricted the sale of alcohol.", "그 시는 주류의 판매를 제한했다.", ["siyoon"]],
+      ["물건, 물체; 대상; 반대하다", "object", "[명 ɑ́bdʒikt / 동 əbdʒékt]", "Wires are long, thin metal objects.", "전깃줄은 길고 가는 금속 물체이다.", ["siyoon"]],
+      ["보안, 안보", "security", "[sikjú:ərəti]", "For security reasons, this area is closed to the public.", "보안상의 이유로 이 지역은 일반인에게 공개되지 않는다.", ["siyoon"]],
+      ["군인, 병사", "soldier", "[sóuldʒər]", "More than 1,000 soldiers died in the war.", "천 명이 넘는 군인들이 그 전쟁에서 사망했다.", ["siyoon"]],
+      ["국경(선), 경계", "border", "[bɔ́:rdər]", "You'll need a passport to cross the border.", "국경을 건너려면 여권이 필요할 것이다.", ["siyoon"]],
+      ["명령, 지휘; 명령하다, 지휘하다", "command", "[kəmǽnd]", "He ignored the police officer's command to stop.", "그는 정지하라는 경찰관의 명령을 무시했다.", ["siyoon"]],
+      ["임무", "mission", "[míʃən]", "Our mission is to work for a better world.", "우리의 임무는 더 나은 세상을 위해 일하는 것이다.", ["siyoon"]],
+      ["~에 찬성하여, ~을 지지하여", "in favor of", "", "Most people in town are in favor of building a new road.", "대부분의 마을 사람들이 새로운 도로 건설에 찬성한다.", ["siyoon"]],
+      ["~하는 것이 허용되다", "be allowed to", "", "Every citizen is allowed to use the public library.", "모든 시민은 공공 도서관을 이용하는 것이 허용된다.", ["siyoon"]]
+    ];
+
+    const day40SiyoonWords = [
+      ["외국의, 해외의", "foreign", "[fɔ́:rin]", "The country depends on foreign aid.", "그 나라는 외국의 원조에 의존하고 있다.", ["siyoon"]],
+      ["국제적인, 국가 간의", "international", "[ìntərnǽʃənəl]", "It's important to preserve international peace.", "국제적인 평화를 유지하는 것은 중요하다.", ["siyoon"]],
+      ["조직, 기구, 단체", "organization", "[ɔ̀:rgənizéiʃən]", "Greenpeace is a global environmental organization.", "그린피스는 국제적인 환경 단체이다.", ["siyoon"]],
+      ["연합, 연맹; (노동) 조합", "union", "[jú:njən]", "The European Union has more than 25 member states.", "유럽 연합은 25개국 이상의 회원국을 가지고 있다.", ["siyoon"]],
+      ["인식하고 있는, 알고 있는", "aware", "[əwέər]", "Many people are aware of the dangers of global warming.", "많은 사람들이 지구 온난화의 위험성을 인식하고 있다.", ["siyoon"]],
+      ["인종[민족] 간의, 인종적인", "racial", "[réiʃəl]", "The racial conflict in the region has become serious.", "그 지역의 인종 간 갈등이 심각해졌다.", ["siyoon"]],
+      ["상황, 처지", "situation", "[sìtʃuéiʃən]", "The global economic situation is getting worse.", "전세계의 경제 상황이 악화되고 있다.", ["siyoon"]],
+      ["설립하다, 창립하다", "found", "[faund]", "He founded a school in Nepal 10 years ago.", "그는 10년 전에 네팔에 학교를 설립했다.", ["siyoon"]],
+      ["원조, 지원", "aid", "[eid]", "Food aid will be sent to the country.", "그 나라에 식량 원조가 보내질 것이다.", ["siyoon"]],
+      ["연합하다, 단결하다[단결시키다]", "unite", "[ju:náit]", "The international community must unite against the new virus.", "국제 사회는 새로운 바이러스에 맞서 단결해야 한다.", ["siyoon"]],
+      ["긴장 (상태), 갈등", "tension", "[ténʃən]", "The terror attack has increased tension between the two countries.", "그 테러 공격은 두 나라 사이의 긴장을 고조시켰다.", ["siyoon"]],
+      ["선언하다, 선포하다", "declare", "[diklέər]", "Germany declared war on France on August 3, 1914.", "독일은 1914년 8월 3일에 프랑스에 대한 전쟁을 선포했다.", ["siyoon"]],
+      ["침략하다, 침입하다", "invade", "[invéid]", "The Romans invaded many countries.", "로마인들은 많은 나라를 침략했다.", ["siyoon"]],
+      ["적, 적국, 적군", "enemy", "[énəmi]", "We must prepare to fight the enemy.", "우리는 적과 싸울 준비를 해야 한다.", ["siyoon"]],
+      ["무력, 군대; 힘, 물리력; 강요하다", "force", "[fɔ:rs]", "The government allowed the use of force.", "정부는 무력 사용을 허용했다.", ["siyoon"]],
+      ["위협, 협박", "threat", "[θret]", "The country is a great threat to world peace.", "그 나라는 세계 평화에 커다란 위협이다.", ["siyoon"]],
+      ["군사의, 군대의", "military", "[mílətèri]", "We may take military action if necessary.", "우리는 필요시에 군사적 조치를 취할 수도 있다.", ["siyoon"]],
+      ["패배시키다, 물리치다; 패배", "defeat", "[difí:t]", "We are ready to defeat our enemies.", "우리는 적을 물리칠 준비가 되어 있다.", ["siyoon"]],
+      ["전투, 싸움", "battle", "[bǽtl]", "Napoleon was defeated at the Battle of Waterloo in 1815.", "나폴레옹은 1815년 워털루 전투에서 패배했다.", ["siyoon"]],
+      ["무기, 병기", "weapon", "[wépən]", "Drop your weapons and come out!", "무기를 버리고 나와라!", ["siyoon"]],
+      ["폭탄, 폭발물", "bomb", "[bam]", "The plane dropped bombs on the city.", "비행기는 그 도시에 폭탄을 떨어뜨렸다.", ["siyoon"]],
+      ["터지다[터뜨리다], 폭발하다[폭파시키다]", "explode", "[iksplóud]", "A bomb exploded in a crowded airport.", "폭탄이 혼잡한 공항에서 폭발했다.", ["siyoon"]],
+      ["원자력의, 핵무기의", "nuclear", "[nú:kliər]", "A nuclear weapon can destroy a whole city.", "핵무기는 도시 전체를 파괴할 수 있다.", ["siyoon"]],
+      ["~에 참여하다, ~에 참가하다", "take part in", "", "We'll take part in the \"Save the Earth\" campaign.", "우리는 '지구 살리기' 캠페인에 참가할 것이다.", ["siyoon"]],
+      ["발생하다, 일어나다", "break out", "", "The First World War broke out in 1914.", "1차 세계대전은 1914년에 일어났다.", ["siyoon"]]
+    ];
+
+    const textbook31KitaeWords = [
+      ["~을 기대하다", "look forward to", "", "", "", ["kitae"]],
+      ["임시 점포[전시장]", "booth", "", "", "", ["kitae"]],
+      ["실험", "experiment", "", "", "", ["kitae"]],
+      ["두뇌", "brain", "", "", "", ["kitae"]],
+      ["연극", "play", "", "", "", ["kitae"]],
+      ["운영하다", "run", "", "", "", ["kitae"]],
+      ["이루어지다, 실현되다", "come true", "", "", "", ["kitae"]],
+      ["성취하다, 이루다", "achieve", "", "", "", ["kitae"]],
+      ["고맙게 생각하는, 감사하는", "thankful", "", "", "", ["kitae"]],
+      ["안전하게", "safely", "", "", "", ["kitae"]],
+      ["음식을 제공하다", "serve", "", "", "", ["kitae"]],
+      ["들어가다", "enter", "", "", "", ["kitae"]],
+      ["시설", "facility", "", "", "", ["kitae"]],
+      ["문, 정문", "gate", "", "", "", ["kitae"]],
+      ["해질녘", "sunset", "", "", "", ["kitae"]],
+      ["줄을 서다", "stand in line", "", "", "", ["kitae"]],
+      ["~까지", "until", "", "", "", ["kitae"]],
+      ["스포츠를 하는 경기장, 코트", "court", "", "", "", ["kitae"]],
+      ["학생회장", "student president", "", "", "", ["kitae"]],
+      ["역할을 하다", "play a role", "", "", "", ["kitae"]],
+      ["보이지 않는 곳에서", "behind the scenes", "", "", "", ["kitae"]],
+      ["수여하다", "present", "", "", "", ["kitae"]],
+      ["연속적인 북 소리", "drum roll", "", "", "", ["kitae"]],
+      ["관리자", "manager", "", "", "", ["kitae"]],
+      ["에어컨", "air conditioner", "", "", "", ["kitae"]]
+    ];
+
+    const textbook32KitaeWords = [
+      ["고장 나다, 무너지다", "break down", "", "", "", ["kitae"]],
+      ["즉시, 곧바로", "right away", "", "", "", ["kitae"]],
+      ["직원", "staff", "", "", "", ["kitae"]],
+      ["준비하다", "prepare", "", "", "", ["kitae"]],
+      ["신선한, 새로운", "fresh", "", "", "", ["kitae"]],
+      ["마지막의, 최종의", "final", "", "", "", ["kitae"]],
+      ["보안, 안전", "security", "", "", "", ["kitae"]],
+      ["확인하다, 반드시 ~하다", "make sure", "", "", "", ["kitae"]],
+      ["~에 집중하다", "focus on", "", "", "", ["kitae"]],
+      ["~ 덕분에", "thanks to", "", "", "", ["kitae"]],
+      ["최선을 다하다", "do one's best", "", "", "", ["kitae"]],
+      ["축하", "congratulation", "", "", "", ["kitae"]],
+      ["전기", "electricity", "", "", "", ["kitae"]],
+      ["나가다, 외출하다", "go out", "", "", "", ["kitae"]],
+      ["도서관 사서", "librarian", "", "", "", ["kitae"]],
+      ["추천하다", "recommend", "", "", "", ["kitae"]],
+      ["두려움, 공포", "fear", "", "", "", ["kitae"]],
+      ["현장 학습, 견학", "field trip", "", "", "", ["kitae"]],
+      ["대회, 시합", "contest", "", "", "", ["kitae"]],
+      ["약, 의학", "medicine", "", "", "", ["kitae"]],
+      ["제안하다, 청혼하다", "propose", "", "", "", ["kitae"]],
+      ["공정한; 박람회", "fair", "", "", "", ["kitae"]],
+      ["직업, 경력", "career", "", "", "", ["kitae"]],
+      ["토론, 논쟁; 토론하다", "debate", "", "", "", ["kitae"]],
+      ["설치하다, 세우다", "set up", "", "", "", ["kitae"]]
+    ];
+
     const partsOfSpeechByDay = {
       33: {
         device: ["명"],
@@ -1247,6 +1565,141 @@
         vision: ["명"],
         "the majority of": ["숙어"],
         "be supposed to": ["숙어"]
+      },
+      38: {
+        legal: ["형"],
+        illegal: ["형"],
+        permit: ["동", "명"],
+        regulate: ["동"],
+        equal: ["형"],
+        justice: ["명"],
+        obey: ["동"],
+        principle: ["명"],
+        violate: ["동"],
+        proof: ["명"],
+        duty: ["명"],
+        trial: ["명"],
+        accuse: ["동"],
+        identify: ["동"],
+        confess: ["동"],
+        witness: ["명", "동"],
+        proper: ["형"],
+        innocent: ["형"],
+        guilty: ["형"],
+        admit: ["동"],
+        punish: ["동"],
+        appeal: ["명", "동"],
+        release: ["동"],
+        "long for": ["숙어"],
+        "regardless of": ["숙어"]
+      },
+      39: {
+        national: ["형"],
+        government: ["명"],
+        republic: ["명"],
+        authority: ["명"],
+        domestic: ["형"],
+        civil: ["형"],
+        independent: ["형"],
+        ethnic: ["형"],
+        official: ["형", "명"],
+        determine: ["동"],
+        president: ["명"],
+        mayor: ["명"],
+        former: ["형"],
+        unify: ["동"],
+        council: ["명"],
+        budget: ["명"],
+        restrict: ["동"],
+        object: ["명", "동"],
+        security: ["명"],
+        soldier: ["명"],
+        border: ["명"],
+        command: ["명", "동"],
+        mission: ["명"],
+        "in favor of": ["숙어"],
+        "be allowed to": ["숙어"]
+      },
+      40: {
+        foreign: ["형"],
+        international: ["형"],
+        organization: ["명"],
+        union: ["명"],
+        aware: ["형"],
+        racial: ["형"],
+        situation: ["명"],
+        found: ["동"],
+        aid: ["명"],
+        unite: ["동"],
+        tension: ["명"],
+        declare: ["동"],
+        invade: ["동"],
+        enemy: ["명"],
+        force: ["명", "동"],
+        threat: ["명"],
+        military: ["형"],
+        defeat: ["동", "명"],
+        battle: ["명"],
+        weapon: ["명"],
+        bomb: ["명"],
+        explode: ["동"],
+        nuclear: ["형"],
+        "take part in": ["숙어"],
+        "break out": ["숙어"]
+      },
+      [TEXTBOOK_31_DAY]: {
+        "look forward to": ["숙어"],
+        booth: ["명"],
+        experiment: ["명"],
+        brain: ["명"],
+        play: ["명"],
+        run: ["동"],
+        "come true": ["숙어"],
+        achieve: ["동"],
+        thankful: ["형"],
+        safely: ["부"],
+        serve: ["동"],
+        enter: ["동"],
+        facility: ["명"],
+        gate: ["명"],
+        sunset: ["명"],
+        "stand in line": ["숙어"],
+        until: ["전"],
+        court: ["명"],
+        "student president": ["명"],
+        "play a role": ["숙어"],
+        "behind the scenes": ["숙어"],
+        present: ["동"],
+        "drum roll": ["명"],
+        manager: ["명"],
+        "air conditioner": ["명"]
+      },
+      [TEXTBOOK_32_DAY]: {
+        "break down": ["숙어"],
+        "right away": ["숙어"],
+        staff: ["명"],
+        prepare: ["동"],
+        fresh: ["형"],
+        final: ["형"],
+        security: ["명"],
+        "make sure": ["숙어"],
+        "focus on": ["숙어"],
+        "thanks to": ["숙어"],
+        "do one's best": ["숙어"],
+        congratulation: ["명"],
+        electricity: ["명"],
+        "go out": ["숙어"],
+        librarian: ["명"],
+        recommend: ["동"],
+        fear: ["명"],
+        "field trip": ["명"],
+        contest: ["명"],
+        medicine: ["명"],
+        propose: ["동"],
+        fair: ["형", "명"],
+        career: ["명"],
+        debate: ["명", "동"],
+        "set up": ["숙어"]
       }
     };
 
@@ -1302,8 +1755,14 @@
       stage2AutoAdvance: true,
       stage2LimitIds: null,
       stage2NextStage3Ids: null,
+      stage1LimitIds: null,
+      stage1ScopeLabel: "",
+      stage2ScopeLabel: "",
+      stage3ScopeLabel: "",
       spellingReviewQueue: [],
-      stage3LimitIds: null
+      stage3LimitIds: null,
+      activeStudent: null,
+      studentProgress: {}
     };
 
     const $ = (id) => document.getElementById(id);
@@ -1325,6 +1784,7 @@
         example: details.example || "",
         exampleKo: details.exampleKo || "",
         spellingChunks: Array.isArray(details.spellingChunks) ? details.spellingChunks : [],
+        students: Array.isArray(details.students) ? details.students : [],
         stage1Pass: false,
         stage1Missed: false,
         stage1MissCount: 0,
@@ -1346,14 +1806,32 @@
       };
     }
 
+    function defaultStudentProgress() {
+      return {
+        currentDay: 33,
+        currentStage: 1,
+        stage3Results: {},
+        words: {}
+      };
+    }
+
+    function safeJsonParse(value, fallback = null) {
+      try {
+        return value ? JSON.parse(value) : fallback;
+      } catch (error) {
+        return fallback;
+      }
+    }
+
     function loadData() {
-      const storedWords = JSON.parse(localStorage.getItem(WORDS_KEY) || "null");
+      const storedWords = safeJsonParse(localStorage.getItem(WORDS_KEY), null);
       if (Array.isArray(storedWords) && storedWords.length) {
         state.words = storedWords;
       } else {
         state.words = sampleWords.map(([korean, english]) => makeWord(33, korean, english));
       }
       normalizeWords();
+      migrateTextbook31Words();
       syncSeedDayWords(33, sampleWords, {
         "out of order": ["broken"],
         "prevent a from -ing": ["prevent"]
@@ -1362,20 +1840,43 @@
       seedDayWords(35, day35Words);
       syncSeedDayWords(36, day36Words);
       syncSeedDayWords(37, day37Words);
+      syncSeedDayWords(38, day38SiyoonWords);
+      syncSeedDayWords(39, day39SiyoonWords);
+      syncSeedDayWords(40, day40SiyoonWords);
+      syncSeedDayWords(TEXTBOOK_31_DAY, textbook31KitaeWords);
+      syncSeedDayWords(TEXTBOOK_32_DAY, textbook32KitaeWords);
       applySeedDetails(33, sampleWords);
       applySeedDetails(34, day34Words);
       applySeedDetails(35, day35Words);
       applySeedDetails(36, day36Words);
       applySeedDetails(37, day37Words);
+      applySeedDetails(38, day38SiyoonWords);
+      applySeedDetails(39, day39SiyoonWords);
+      applySeedDetails(40, day40SiyoonWords);
+      applySeedDetails(TEXTBOOK_31_DAY, textbook31KitaeWords);
+      applySeedDetails(TEXTBOOK_32_DAY, textbook32KitaeWords);
 
-      const storedProgress = JSON.parse(localStorage.getItem(PROGRESS_KEY) || "null");
-      state.progress = storedProgress && typeof storedProgress === "object" ? {
+      const storedProgress = safeJsonParse(localStorage.getItem(PROGRESS_KEY), null);
+      const legacyProgress = storedProgress && typeof storedProgress === "object" ? {
         ...defaultProgress(),
         ...storedProgress,
         stage3Results: storedProgress.stage3Results || {}
       } : defaultProgress();
+      migrateTextbook31Progress(legacyProgress);
 
-      state.selectedDay = state.progress.currentDay || 33;
+      state.progress = legacyProgress;
+      state.studentProgress = normalizeStudentProgressStore(safeJsonParse(localStorage.getItem(STUDENTS_KEY), null));
+      Object.values(state.studentProgress).forEach(migrateTextbook31Progress);
+      if (!hasAnyStudentProgress(state.studentProgress)) {
+        seedStudentsFromLegacyProgress(legacyProgress);
+      }
+      const savedStudent = localStorage.getItem(ACTIVE_STUDENT_KEY);
+      state.activeStudent = STUDENTS[savedStudent] ? savedStudent : null;
+      if (state.activeStudent) {
+        applyActiveStudentProgress();
+      } else {
+        state.selectedDay = state.progress.currentDay || 33;
+      }
       saveData();
     }
 
@@ -1412,6 +1913,7 @@
         word.example = details.example;
         word.exampleKo = details.exampleKo;
         word.spellingChunks = getSeedSpellingChunks(dayNumber, english);
+        word.students = Array.isArray(details.students) ? details.students : [];
         return word;
       });
       const extras = existing.filter((word) => !used.has(word));
@@ -1431,6 +1933,25 @@
       state.words = nextWords;
     }
 
+    function migrateTextbook31Words() {
+      const textbookKeys = new Set(textbook31KitaeWords.map((entry) => String(entry[1] || "").toLowerCase()));
+      state.words.forEach((word) => {
+        const isLegacyTextbook = Number(word.day) === LEGACY_TEXTBOOK_31_DAY
+          && textbookKeys.has(String(word.english || "").toLowerCase())
+          && (!Array.isArray(word.students) || !word.students.length || word.students.includes("kitae"));
+        if (!isLegacyTextbook) return;
+        word.day = TEXTBOOK_31_DAY;
+        word.students = ["kitae"];
+      });
+    }
+
+    function migrateTextbook31Progress(progress) {
+      if (!progress || typeof progress !== "object") return;
+      if (Number(progress.currentDay) === LEGACY_TEXTBOOK_31_DAY) {
+        progress.currentDay = TEXTBOOK_31_DAY;
+      }
+    }
+
     function applySeedDetails(day, entries) {
       entries.forEach((entry) => {
         const [, english] = entry;
@@ -1442,6 +1963,7 @@
         word.example = details.example;
         word.exampleKo = details.exampleKo;
         word.spellingChunks = getSeedSpellingChunks(day, english);
+        word.students = Array.isArray(details.students) ? details.students : [];
       });
     }
 
@@ -1459,7 +1981,8 @@
       return {
         pronunciation: entry[2] || "",
         example: entry[3] || "",
-        exampleKo: entry[4] || ""
+        exampleKo: entry[4] || "",
+        students: Array.isArray(entry[5]) ? entry[5] : []
       };
     }
 
@@ -1471,11 +1994,13 @@
         const stage2MissCount = Number.isFinite(Number(word.stage2MissCount)) ? Number(word.stage2MissCount) : legacyStage2Missed;
         return {
           ...word,
+          day: Number(word.day),
           partsOfSpeech: Array.isArray(word.partsOfSpeech) ? word.partsOfSpeech : [],
           pronunciation: typeof word.pronunciation === "string" ? word.pronunciation : "",
           example: typeof word.example === "string" ? word.example : "",
           exampleKo: typeof word.exampleKo === "string" ? word.exampleKo : "",
           spellingChunks: Array.isArray(word.spellingChunks) ? word.spellingChunks : [],
+          students: Array.isArray(word.students) ? word.students.filter((studentId) => STUDENTS[studentId]) : [],
           stage1Missed: count > 0,
           stage1MissCount: count,
           stage2Missed: stage2MissCount > 0,
@@ -1489,7 +2014,157 @@
       });
     }
 
+    function getDefaultWordProgress() {
+      return {
+        stage1Pass: false,
+        stage1Missed: false,
+        stage1MissCount: 0,
+        stage2Missed: false,
+        stage2MissCount: 0,
+        stage2ReviewNeeded: false,
+        stage2LastWrongAnswer: "",
+        spellingTroubleChunks: [],
+        stage2Count: 0,
+        stage2Pass: false
+      };
+    }
+
+    function extractWordProgress(word) {
+      const progress = getDefaultWordProgress();
+      WORD_PROGRESS_FIELDS.forEach((field) => {
+        const value = word[field];
+        progress[field] = Array.isArray(value) ? [...value] : value;
+      });
+      progress.stage1MissCount = Number(progress.stage1MissCount || 0);
+      progress.stage2MissCount = Number(progress.stage2MissCount || 0);
+      progress.stage2Count = Number(progress.stage2Count || 0);
+      progress.stage1Missed = progress.stage1MissCount > 0 || progress.stage1Missed === true;
+      progress.stage2Missed = progress.stage2MissCount > 0 || progress.stage2Missed === true;
+      progress.spellingTroubleChunks = Array.isArray(progress.spellingTroubleChunks) ? progress.spellingTroubleChunks : [];
+      return progress;
+    }
+
+    function applyWordProgress(word, progress = {}) {
+      const merged = {
+        ...getDefaultWordProgress(),
+        ...progress
+      };
+      word.stage1Pass = merged.stage1Pass === true;
+      word.stage1MissCount = Number(merged.stage1MissCount || 0);
+      word.stage1Missed = word.stage1MissCount > 0 || merged.stage1Missed === true;
+      word.stage2Count = Number(merged.stage2Count || 0);
+      word.stage2Pass = merged.stage2Pass === true;
+      word.stage2MissCount = Number(merged.stage2MissCount || 0);
+      word.stage2Missed = word.stage2MissCount > 0 || merged.stage2Missed === true;
+      word.stage2ReviewNeeded = merged.stage2ReviewNeeded === true;
+      word.stage2LastWrongAnswer = typeof merged.stage2LastWrongAnswer === "string" ? merged.stage2LastWrongAnswer : "";
+      word.spellingTroubleChunks = Array.isArray(merged.spellingTroubleChunks)
+        ? merged.spellingTroubleChunks.map((index) => Number(index)).filter((index) => Number.isInteger(index) && index >= 0)
+        : [];
+    }
+
+    function normalizeStudentProgressStore(store) {
+      const normalized = {};
+      Object.keys(STUDENTS).forEach((studentId) => {
+        const source = store && typeof store === "object" && store[studentId] && typeof store[studentId] === "object"
+          ? store[studentId]
+          : {};
+        normalized[studentId] = {
+          ...defaultStudentProgress(),
+          ...source,
+          stage3Results: source.stage3Results && typeof source.stage3Results === "object" ? source.stage3Results : {},
+          words: source.words && typeof source.words === "object" ? source.words : {}
+        };
+      });
+      return normalized;
+    }
+
+    function hasAnyStudentProgress(store) {
+      return Object.keys(STUDENTS).some((studentId) => {
+        const progress = store && store[studentId];
+        return progress && progress.words && Object.keys(progress.words).length;
+      });
+    }
+
+    function seedStudentsFromLegacyProgress(legacyProgress = defaultProgress()) {
+      Object.keys(STUDENTS).forEach((studentId) => {
+        const progress = {
+          ...defaultStudentProgress(),
+          currentDay: legacyProgress.currentDay || 33,
+          currentStage: legacyProgress.currentStage || 1,
+          stage3Results: { ...(legacyProgress.stage3Results || {}) },
+          words: {}
+        };
+        state.words.forEach((word) => {
+          progress.words[word.id] = extractWordProgress(word);
+        });
+        state.studentProgress[studentId] = progress;
+      });
+    }
+
+    function activeStudentInfo() {
+      return STUDENTS[state.activeStudent] || null;
+    }
+
+    function getActiveStudentProgress() {
+      if (!state.activeStudent || !STUDENTS[state.activeStudent]) return null;
+      if (!state.studentProgress[state.activeStudent]) {
+        state.studentProgress[state.activeStudent] = defaultStudentProgress();
+      }
+      return state.studentProgress[state.activeStudent];
+    }
+
+    function saveActiveStudentProgress() {
+      const progress = getActiveStudentProgress();
+      if (!progress) return;
+      progress.currentDay = Number(state.progress.currentDay || state.selectedDay || 33);
+      progress.currentStage = Number(state.progress.currentStage || 1);
+      progress.stage3Results = { ...(state.progress.stage3Results || {}) };
+      progress.words = progress.words && typeof progress.words === "object" ? progress.words : {};
+      state.words.forEach((word) => {
+        progress.words[word.id] = extractWordProgress(word);
+      });
+    }
+
+    function applyActiveStudentProgress() {
+      const progress = getActiveStudentProgress();
+      if (!progress) return;
+      state.progress = {
+        ...defaultProgress(),
+        currentDay: progress.currentDay || 33,
+        currentStage: progress.currentStage || 1,
+        stage3Results: progress.stage3Results || {}
+      };
+      state.selectedDay = state.progress.currentDay || 33;
+      state.words.forEach((word) => {
+        applyWordProgress(word, progress.words ? progress.words[word.id] : null);
+      });
+      resetSessionState();
+    }
+
+    function resetSessionState() {
+      clearStage1Timer();
+      stopSpeech();
+      state.stage1Queue = [];
+      state.stage1Current = null;
+      state.stage1SessionIds = [];
+      state.stage1Seen = 0;
+      state.stage1LimitIds = null;
+      state.stage1ScopeLabel = "";
+      state.stage2Queue = [];
+      state.stage2Current = null;
+      state.stage2LimitIds = null;
+      state.stage2NextStage3Ids = null;
+      state.stage2ScopeLabel = "";
+      state.stage3LimitIds = null;
+      state.stage3ScopeLabel = "";
+      state.spellingReviewQueue = [];
+    }
+
     function saveData() {
+      saveActiveStudentProgress();
+      localStorage.setItem(STUDENTS_KEY, JSON.stringify(state.studentProgress));
+      if (state.activeStudent) localStorage.setItem(ACTIVE_STUDENT_KEY, state.activeStudent);
       localStorage.setItem(WORDS_KEY, JSON.stringify(state.words));
       localStorage.setItem(PROGRESS_KEY, JSON.stringify(state.progress));
     }
@@ -1498,8 +2173,10 @@
       saveData();
       const payload = {
         app: "korean-english-vocab",
-        version: 1,
+        version: 2,
         exportedAt: new Date().toISOString(),
+        activeStudent: state.activeStudent,
+        studentProgress: state.studentProgress,
         words: state.words,
         progress: state.progress
       };
@@ -1538,17 +2215,17 @@
             stage3Results: payload.progress.stage3Results || {}
           };
           normalizeWords();
-          state.selectedDay = state.progress.currentDay || 33;
-          state.stage1Queue = [];
-          state.stage1Current = null;
-          state.stage1SessionIds = [];
-          state.stage2Queue = [];
-          state.stage2Current = null;
-          state.stage2LimitIds = null;
-          state.stage2NextStage3Ids = null;
-          state.stage3LimitIds = null;
+          state.studentProgress = normalizeStudentProgressStore(payload.studentProgress || null);
+          if (!hasAnyStudentProgress(state.studentProgress)) {
+            seedStudentsFromLegacyProgress(state.progress);
+          }
+          state.activeStudent = STUDENTS[payload.activeStudent] ? payload.activeStudent : state.activeStudent;
+          if (state.activeStudent) applyActiveStudentProgress();
+          else state.selectedDay = state.progress.currentDay || 33;
+          resetSessionState();
           saveData();
-          renderHome();
+          if (state.activeStudent) renderHome();
+          else renderStudentScreen();
           setBackupStatus("진도를 불러왔어요.");
         } catch (error) {
           alert("백업 파일을 읽을 수 없어요.");
@@ -1566,17 +2243,65 @@
     function wordsForDay(day = state.progress.currentDay) {
       return state.words
         .filter((word) => word.day === Number(day))
+        .filter((word) => isWordVisibleForActiveStudent(word))
         .sort((a, b) => state.words.indexOf(a) - state.words.indexOf(b));
+    }
+
+    function isWordVisibleForActiveStudent(word) {
+      const assignedStudents = Array.isArray(word.students) ? word.students : [];
+      if (!state.activeStudent) return true;
+      if (state.activeStudent === "kitae") return assignedStudents.includes("kitae");
+      if (!assignedStudents.length) return true;
+      return assignedStudents.includes(state.activeStudent);
+    }
+
+    function wordsForLimit(limitIds = null, day = state.progress.currentDay) {
+      const words = wordsForDay(day);
+      if (!Array.isArray(limitIds) || !limitIds.length) return words;
+      const allowed = new Set(limitIds);
+      return words.filter((word) => allowed.has(word.id));
+    }
+
+    function getPartWords(day, part) {
+      const words = wordsForDay(day);
+      if (part === "part1") return words.slice(0, 15);
+      if (part === "part2") return words.slice(15, 25);
+      return words;
+    }
+
+    function getStudySections(day = state.progress.currentDay) {
+      const words = wordsForDay(day);
+      const sections = [];
+      for (let index = 0; index < words.length; index += 10) {
+        const sectionWords = words.slice(index, index + 10);
+        sections.push({
+          index: sections.length,
+          label: `${sections.length + 1}구간`,
+          range: `${index + 1}~${index + sectionWords.length}번`,
+          words: sectionWords,
+          ids: sectionWords.map((word) => word.id)
+        });
+      }
+      return sections;
+    }
+
+    function getPartIds(day, part) {
+      return getPartWords(day, part).map((word) => word.id);
     }
 
     function daysWithWords() {
       const counts = new Map();
-      state.words.forEach((word) => counts.set(word.day, (counts.get(word.day) || 0) + 1));
+      state.words
+        .filter((word) => isWordVisibleForActiveStudent(word))
+        .forEach((word) => counts.set(word.day, (counts.get(word.day) || 0) + 1));
       return [...counts.entries()].sort((a, b) => a[0] - b[0]);
     }
 
-    function dayStats(day) {
-      const list = wordsForDay(day);
+    function formatDayLabel(day) {
+      return DAY_LABELS[Number(day)] || `Day ${day}`;
+    }
+
+    function statsForWords(list) {
       const total = list.length || 1;
       const s1 = list.filter((word) => word.stage1Pass).length;
       const s2 = list.filter((word) => word.stage2Pass).length;
@@ -1591,12 +2316,37 @@
       };
     }
 
+    function dayStats(day) {
+      return statsForWords(wordsForDay(day));
+    }
+
     function showScreen(id) {
       if (id !== "stage1Screen") clearStage1Timer();
       if (id !== "stage1Screen") stopSpeech();
       document.querySelectorAll(".screen").forEach((screen) => screen.classList.remove("active"));
       $(id).classList.add("active");
-      window.scrollTo({ top: 0, behavior: "instant" });
+      window.scrollTo(0, 0);
+    }
+
+    function renderStudentScreen() {
+      showScreen("studentScreen");
+    }
+
+    function selectStudent(studentId) {
+      if (!STUDENTS[studentId]) return;
+      saveActiveStudentProgress();
+      state.activeStudent = studentId;
+      localStorage.setItem(ACTIVE_STUDENT_KEY, studentId);
+      applyActiveStudentProgress();
+      saveData();
+      renderHome();
+    }
+
+    function changeStudent() {
+      saveData();
+      state.activeStudent = null;
+      localStorage.removeItem(ACTIVE_STUDENT_KEY);
+      renderStudentScreen();
     }
 
     function renderStageBar(containerId, activeStage, stats = dayStats(state.progress.currentDay)) {
@@ -1654,22 +2404,42 @@
     }
 
     function renderHome() {
+      if (!state.activeStudent) {
+        renderStudentScreen();
+        return;
+      }
+      const student = activeStudentInfo();
+      $("homeSubtitle").textContent = student.mode === "split"
+        ? "기태는 10개씩 구간을 나눠서 외워요."
+        : "시윤이는 한 과 25개를 한 번에 외워요.";
+      $("currentStudentBadge").textContent = `${student.name} 학습중`;
+      $("startDayBtn").textContent = student.mode === "split" ? "선택한 단어장 계획대로 시작" : "선택한 단어장 전체 학습 시작";
       const days = daysWithWords();
       if (!days.length) {
         $("dayList").innerHTML = `<div class="empty">아직 단어가 없어요. 단어 관리에서 새 Day를 추가하세요.</div>`;
       } else {
         $("dayList").innerHTML = days.map(([day, count]) => {
           const stats = dayStats(day);
+          const sections = getStudySections(day);
           const pendingStage2Review = getPendingStage2ReviewTargets(wordsForDay(day)).length;
           const selected = Number(day) === Number(state.selectedDay) ? "selected" : "";
-          return `
-            <button class="day-item ${selected}" data-day="${day}" aria-pressed="${selected ? "true" : "false"}">
-              <div>
-                <div class="day-title">Day ${day} - ${count}단어</div>
-                <div class="status-row">
+          const statusHtml = student.mode === "split" ? `
+                  ${sections.map((section) => {
+                    const sectionStats = statsForWords(section.words);
+                    return `<span class="badge ${sectionStats.s2Done ? "done" : ""}">${section.label} ${sectionStats.s2}/${sectionStats.total}</span>`;
+                  }).join("")}
+                  <span class="badge ${stats.s3Done ? "done" : ""}">전체 테스트 ${stats.s3Done ? "완료" : "미완료"}</span>
+                ` : `
                   <span class="badge ${stats.s1Done ? "done" : ""}">Stage 1 ${stats.s1}/${stats.total}</span>
                   <span class="badge ${stats.s2Done ? "done" : ""}">Stage 2 ${stats.s2}/${stats.total}</span>
                   <span class="badge ${stats.s3Done ? "done" : ""}">Stage 3 ${stats.s3Done ? "완료" : "미완료"}</span>
+                `;
+          return `
+            <button class="day-item ${selected}" data-day="${day}" aria-pressed="${selected ? "true" : "false"}">
+              <div>
+                <div class="day-title">${formatDayLabel(day)} - ${count}단어</div>
+                <div class="status-row">
+                  ${statusHtml}
                   ${pendingStage2Review ? `<span class="badge">2단계 오답 복습 ${pendingStage2Review}개</span>` : ""}
                 </div>
               </div>
@@ -1687,14 +2457,80 @@
           renderHome();
         });
       });
+      renderStudyPlanPanel();
       showScreen("homeScreen");
     }
 
+    function renderStudyPlanPanel() {
+      const student = activeStudentInfo();
+      const panel = $("studyPlanPanel");
+      if (!student || !panel) return;
+      const day = Number(state.selectedDay || state.progress.currentDay || 33);
+      const words = wordsForDay(day);
+      if (!words.length) {
+        panel.innerHTML = "";
+        return;
+      }
+      if (student.mode === "split") {
+        const sections = getStudySections(day);
+        const all = statsForWords(words);
+        panel.innerHTML = `
+          <div class="plan-panel stack">
+            <div>
+              <h3>기태 학습 계획</h3>
+              <p class="muted">10개씩 구간을 나눠 학습하고, 시험은 전체 25개를 한 번에 봐요.</p>
+            </div>
+            <div class="plan-grid compact-plan">
+              ${sections.map((section, index) => {
+                const sectionStats = statsForWords(section.words);
+                return `
+                  <button class="plan-card plan-start ${index === 0 ? "primary-plan" : ""}" data-scope="section-${index}">
+                    <div>
+                      <div class="plan-title">${section.label} 학습</div>
+                      <div class="plan-meta">${section.range} · 2단계 ${sectionStats.s2}/${sectionStats.total}</div>
+                    </div>
+                  </button>
+                `;
+              }).join("")}
+            </div>
+            <button class="success plan-start" data-scope="all-test">전체 25개 시험보기 · ${all.s3Done ? "완료" : "미완료"}</button>
+          </div>
+        `;
+      } else {
+        const all = statsForWords(words);
+        panel.innerHTML = `
+          <div class="plan-panel stack">
+            <div>
+              <h3>시윤 학습 계획</h3>
+              <p class="muted">전체 단어를 한 번에 학습해요.</p>
+            </div>
+            <div class="plan-grid">
+              <button class="plan-card primary-plan plan-start" data-scope="all">
+                <span class="plan-title">전체 25개 학습</span>
+                <span class="plan-meta">1단계 ${all.s1}/${all.total} · 2단계 ${all.s2}/${all.total}</span>
+              </button>
+              <button class="plan-card plan-start" data-scope="all-test">
+                <span class="plan-title">전체 테스트</span>
+                <span class="plan-meta">3단계 ${all.s3Done ? "완료" : "미완료"}</span>
+              </button>
+            </div>
+          </div>
+        `;
+      }
+      document.querySelectorAll(".plan-start").forEach((button) => {
+        button.addEventListener("click", () => startStudyScope(button.dataset.scope));
+      });
+    }
+
     function renderManager() {
-      $("dayPreset").innerHTML = Array.from({ length: 100 }, (_, index) => {
+      $("dayPreset").innerHTML = [
+        `<option value="${TEXTBOOK_31_DAY}">교과서 3-1</option>`,
+        `<option value="${TEXTBOOK_32_DAY}">교과서 3-2</option>`,
+        ...Array.from({ length: 100 }, (_, index) => {
         const day = index + 1;
         return `<option value="${day}">Day ${day}</option>`;
-      }).join("");
+        })
+      ].join("");
       $("dayPreset").value = state.selectedDay;
       $("daySelect").value = state.selectedDay;
       renderManagerWords();
@@ -1705,7 +2541,9 @@
       const day = Number($("daySelect").value || state.selectedDay || 33);
       state.selectedDay = day;
       if (day >= 1 && day <= 100) $("dayPreset").value = day;
-      $("managerDayTitle").textContent = `Day ${day}`;
+      else if (day === TEXTBOOK_31_DAY) $("dayPreset").value = TEXTBOOK_31_DAY;
+      else if (day === TEXTBOOK_32_DAY) $("dayPreset").value = TEXTBOOK_32_DAY;
+      $("managerDayTitle").textContent = formatDayLabel(day);
       const list = wordsForDay(day);
       $("managerWordList").innerHTML = list.length ? list.map((word, index) => `
         <div class="word-row">
@@ -1720,6 +2558,11 @@
           const id = button.dataset.id;
           state.words = state.words.filter((word) => word.id !== id);
           delete state.progress.stage3Results[id];
+          Object.values(state.studentProgress).forEach((progress) => {
+            if (!progress || typeof progress !== "object") return;
+            if (progress.words) delete progress.words[id];
+            if (progress.stage3Results) delete progress.stage3Results[id];
+          });
           saveData();
           renderManagerWords();
         });
@@ -1730,11 +2573,12 @@
       const day = Number($("daySelect").value);
       const korean = $("koreanInput").value.trim();
       const english = $("englishInput").value.trim().toLowerCase();
-      if (!day || day < 1 || day > 100 || !korean || !english) {
-        alert("Day 1~100, Korean, English를 모두 입력하세요.");
+      if (!day || day < 1 || day > 999 || !korean || !english) {
+        alert("Day/교과서 번호, Korean, English를 모두 입력하세요.");
         return;
       }
-      state.words.push(makeWord(day, korean, english));
+      const students = state.activeStudent ? [state.activeStudent] : [];
+      state.words.push(makeWord(day, korean, english, { students }));
       state.selectedDay = day;
       state.progress.currentDay = day;
       $("koreanInput").value = "";
@@ -1746,24 +2590,98 @@
 
     function startSelectedDay() {
       if (!wordsForDay(state.selectedDay).length) {
-        alert("선택한 Day에 단어가 없어요.");
+        alert("선택한 단어장에 단어가 없어요.");
+        return;
+      }
+      const student = activeStudentInfo();
+      if (student && student.mode === "split") {
+        startStudyScope(getFirstKitaeScope(state.selectedDay));
+        return;
+      }
+      startStudyScope("all");
+    }
+
+    function getFirstKitaeScope(day) {
+      const sections = getStudySections(day);
+      const firstIncomplete = sections.find((section) => !statsForWords(section.words).s2Done);
+      return firstIncomplete ? `section-${firstIncomplete.index}` : "all-test";
+    }
+
+    function startStudyScope(scope = "all") {
+      if (!state.activeStudent) {
+        renderStudentScreen();
+        return;
+      }
+      if (!wordsForDay(state.selectedDay).length) {
+        alert("선택한 단어장에 단어가 없어요.");
         return;
       }
       state.progress.currentDay = Number(state.selectedDay);
-      const stats = dayStats(state.progress.currentDay);
-      const pendingStage2Review = getPendingStage2ReviewTargets();
-      if (!stats.s1Done) startStage1();
-      else if (pendingStage2Review.length) startStage2ReviewLoop(pendingStage2Review);
-      else if (!stats.s2Done) startStage2();
-      else startStage3();
+      const scopeInfo = getScopeInfo(scope, state.progress.currentDay);
+      if (scopeInfo.testOnly) {
+        startStage3(scopeInfo.ids, scopeInfo.label);
+        return;
+      }
+      const stats = statsForWords(scopeInfo.words);
+      const pendingStage2Review = getPendingStage2ReviewTargets(scopeInfo.words);
+      if (!stats.s1Done) startStage1("slow", scopeInfo.ids, scopeInfo.label);
+      else if (pendingStage2Review.length) startStage2ReviewLoop(pendingStage2Review, scopeInfo.label);
+      else if (!stats.s2Done) startStage2(scopeInfo.ids, true, scopeInfo.ids, scopeInfo.label);
+      else startStage3(scopeInfo.ids, scopeInfo.label);
     }
 
-    function startStage1(mode = "slow") {
+    function getScopeInfo(scope = "all", day = state.progress.currentDay) {
+      const sectionMatch = String(scope || "").match(/^section-(test-)?(\d+)$/);
+      if (sectionMatch) {
+        const isTest = Boolean(sectionMatch[1]);
+        const section = getStudySections(day)[Number(sectionMatch[2])] || getStudySections(day)[0];
+        return {
+          scope,
+          label: `${section.label} · ${section.range}`,
+          ids: section.ids,
+          words: section.words,
+          testOnly: isTest
+        };
+      }
+      if (scope === "part1") {
+        const words = getPartWords(day, "part1");
+        return {
+          scope,
+          label: "파트 1 · 1~15번",
+          ids: words.map((word) => word.id),
+          words,
+          testOnly: false
+        };
+      }
+      if (scope === "part2") {
+        const words = getPartWords(day, "part2");
+        return {
+          scope,
+          label: "파트 2 · 16~25번",
+          ids: words.map((word) => word.id),
+          words,
+          testOnly: false
+        };
+      }
+      const words = wordsForDay(day);
+      return {
+        scope,
+        label: "전체 25개",
+        ids: null,
+        words,
+        testOnly: scope === "all-test"
+      };
+    }
+
+    function startStage1(mode = "slow", limitIds = null, scopeLabel = "") {
       state.progress.currentStage = 1;
       state.stage1Mode = mode;
-      state.stage1Queue = wordsForDay().filter((word) => !word.stage1Pass).map((word) => word.id);
+      state.stage1LimitIds = Array.isArray(limitIds) ? [...limitIds] : null;
+      state.stage1ScopeLabel = scopeLabel || "";
+      const words = wordsForLimit(state.stage1LimitIds);
+      state.stage1Queue = words.filter((word) => !word.stage1Pass).map((word) => word.id);
       state.stage1SessionIds = [...state.stage1Queue];
-      state.stage1Seen = wordsForDay().filter((word) => word.stage1Pass).length;
+      state.stage1Seen = words.filter((word) => word.stage1Pass).length;
       saveData();
       showScreen("stage1Screen");
       nextStage1Word();
@@ -1772,13 +2690,14 @@
     function nextStage1Word() {
       clearStage1Timer();
       stopSpeech();
-      const words = wordsForDay();
+      const words = wordsForLimit(state.stage1LimitIds);
       updateStageNavButtons();
       const sessionWords = getStage1SessionWords();
       const sessionTotal = sessionWords.length || words.length;
       const passed = sessionWords.length ? sessionWords.filter((word) => word.stage1Pass).length : words.filter((word) => word.stage1Pass).length;
       const modeName = getStage1ModeName();
-      $("stage1Meta").textContent = `Day ${state.progress.currentDay} · ${modeName} · ${passed}/${sessionTotal}`;
+      const scope = state.stage1ScopeLabel ? `${state.stage1ScopeLabel} · ` : "";
+      $("stage1Meta").textContent = `${formatDayLabel(state.progress.currentDay)} · ${scope}${modeName} · ${passed}/${sessionTotal}`;
       $("stage1Progress").style.width = `${sessionTotal ? (passed / sessionTotal) * 100 : 0}%`;
       renderStageBar("stage1Bar", 1);
 
@@ -1803,7 +2722,7 @@
         $("restartStage1Slow").addEventListener("click", () => restartStage1("slow"));
         $("restartStage1Timed").addEventListener("click", () => restartStage1("timed"));
         $("restartStage1Weak").addEventListener("click", () => restartStage1("weak"));
-        $("goStage2").addEventListener("click", () => startStage2());
+        $("goStage2").addEventListener("click", () => startStage2(state.stage1LimitIds, true, state.stage1LimitIds, state.stage1ScopeLabel));
         return;
       }
 
@@ -2121,7 +3040,7 @@
     }
 
     function restartStage1(mode) {
-      const words = wordsForDay();
+      const words = wordsForLimit(state.stage1LimitIds);
       const targets = getStage1RestartTargets(mode, words);
       if (!targets.length) return;
       state.stage1Mode = mode;
@@ -2247,7 +3166,7 @@
       updateStageNavButtons();
       const words = wordsForDay();
       const totalTroubles = getSpellingTroubleCount(words);
-      $("stage2Meta").textContent = `Day ${state.progress.currentDay} · 헷갈린 조각 복습 · ${totalTroubles}개 남음`;
+      $("stage2Meta").textContent = `${formatDayLabel(state.progress.currentDay)} · 헷갈린 조각 복습 · ${totalTroubles}개 남음`;
       $("stage2Progress").style.width = totalTroubles ? "20%" : "100%";
       renderStageBar("stage2Bar", 2);
 
@@ -2323,7 +3242,7 @@
       if ($("stage3Screen").classList.contains("active")) renderStage3();
     }
 
-    function startStage2ReviewLoop(targets = getPendingStage2ReviewTargets()) {
+    function startStage2ReviewLoop(targets = getPendingStage2ReviewTargets(), scopeLabel = "") {
       if (!targets.length) return;
       targets.forEach((word) => {
         word.stage2Count = 0;
@@ -2331,7 +3250,7 @@
       });
       saveData();
       const ids = targets.map((word) => word.id);
-      startStage2(ids, true, ids);
+      startStage2(ids, true, ids, scopeLabel || "오답 복습");
     }
 
     function restartStage2All() {
@@ -2362,13 +3281,13 @@
       return `내 답: ${escapeHtml(answer)}`;
     }
 
-    function startStage2(limitIds = null, autoAdvance = true, nextStage3Ids = null) {
+    function startStage2(limitIds = null, autoAdvance = true, nextStage3Ids = null, scopeLabel = "") {
       state.progress.currentStage = 2;
       state.stage2AutoAdvance = autoAdvance;
       state.stage2LimitIds = Array.isArray(limitIds) ? [...limitIds] : null;
       state.stage2NextStage3Ids = Array.isArray(nextStage3Ids) ? [...nextStage3Ids] : null;
-      const source = wordsForDay()
-        .filter((word) => !state.stage2LimitIds || state.stage2LimitIds.includes(word.id))
+      state.stage2ScopeLabel = scopeLabel || "";
+      const source = wordsForLimit(state.stage2LimitIds)
         .filter((word) => !word.stage2Pass);
       state.stage2Queue = source.map((word) => word.id);
       state.stage2Locked = false;
@@ -2379,13 +3298,11 @@
 
     function nextStage2Word(autoAdvance = true) {
       const words = wordsForDay();
-      const targetWords = state.stage2LimitIds
-        ? words.filter((word) => state.stage2LimitIds.includes(word.id))
-        : words;
+      const targetWords = wordsForLimit(state.stage2LimitIds);
       updateStageNavButtons();
       const passed = targetWords.filter((word) => word.stage2Pass).length;
-      const modeLabel = state.stage2LimitIds ? "오답 복습 · " : "";
-      $("stage2Meta").textContent = `Day ${state.progress.currentDay} · ${modeLabel}${passed}/${targetWords.length}`;
+      const modeLabel = state.stage2ScopeLabel ? `${state.stage2ScopeLabel} · ` : state.stage2LimitIds ? "부분 학습 · " : "";
+      $("stage2Meta").textContent = `${formatDayLabel(state.progress.currentDay)} · ${modeLabel}${passed}/${targetWords.length}`;
       $("stage2Progress").style.width = `${targetWords.length ? (passed / targetWords.length) * 100 : 0}%`;
       renderStageBar("stage2Bar", 2);
 
@@ -2395,13 +3312,16 @@
         if (!state.stage2Queue.length) {
           if (autoAdvance) {
             const nextStage3Ids = state.stage2NextStage3Ids ? [...state.stage2NextStage3Ids] : null;
+            const nextScopeLabel = state.stage2ScopeLabel;
             state.stage2LimitIds = null;
             state.stage2NextStage3Ids = null;
-            startStage3(nextStage3Ids);
+            state.stage2ScopeLabel = "";
+            startStage3(nextStage3Ids, nextScopeLabel);
             return;
           }
           state.stage2LimitIds = null;
           state.stage2NextStage3Ids = null;
+          state.stage2ScopeLabel = "";
           $("stage2Content").innerHTML = `
             <div class="panel celebration stack">
               <div>
@@ -2757,25 +3677,25 @@
       setTimeout(() => nextStage2Word(state.stage2AutoAdvance), 650);
     }
 
-    function startStage3(limitIds = null) {
+    function startStage3(limitIds = null, scopeLabel = "") {
       state.progress.currentStage = 3;
       state.stage3LimitIds = Array.isArray(limitIds) ? [...limitIds] : null;
+      state.stage3ScopeLabel = scopeLabel || "";
       saveData();
       renderStage3();
       showScreen("stage3Screen");
     }
 
     function getStage3Words() {
-      const words = wordsForDay();
-      if (!state.stage3LimitIds) return words;
-      return words.filter((word) => state.stage3LimitIds.includes(word.id));
+      return wordsForLimit(state.stage3LimitIds);
     }
 
     function renderStage3(graded = false, results = null, answers = {}) {
       const words = getStage3Words();
       const isMiniTest = Boolean(state.stage3LimitIds);
       updateStageNavButtons();
-      $("stage3Meta").textContent = `Day ${state.progress.currentDay} · ${isMiniTest ? "오답 미니 테스트 · " : ""}${words.length}단어`;
+      const scope = state.stage3ScopeLabel ? `${state.stage3ScopeLabel} · ` : isMiniTest ? "오답 미니 테스트 · " : "";
+      $("stage3Meta").textContent = `${formatDayLabel(state.progress.currentDay)} · ${scope}${words.length}단어`;
       renderStageBar("stage3Bar", 3);
       $("stage3Content").innerHTML = `
         <div class="panel stack">
@@ -2942,6 +3862,9 @@
         .replace(/'/g, "&#039;");
     }
 
+    $("selectKitae").addEventListener("click", () => selectStudent("kitae"));
+    $("selectSiyoon").addEventListener("click", () => selectStudent("siyoon"));
+    $("changeStudentBtn").addEventListener("click", changeStudent);
     $("startDayBtn").addEventListener("click", startSelectedDay);
     $("managerBtn").addEventListener("click", renderManager);
     $("backupBtn").addEventListener("click", exportBackup);
@@ -2949,17 +3872,17 @@
     $("restoreFile").addEventListener("change", importBackupFile);
     $("managerBackBtn").addEventListener("click", renderHome);
     $("addWordBtn").addEventListener("click", addWord);
-    $("stage1ToStage2").addEventListener("click", () => startStage2(null, false));
-    $("stage1ToStage3").addEventListener("click", () => startStage3());
+    $("stage1ToStage2").addEventListener("click", () => startStage2(state.stage1LimitIds, false, null, state.stage1ScopeLabel));
+    $("stage1ToStage3").addEventListener("click", () => startStage3(state.stage1LimitIds, state.stage1ScopeLabel));
     $("resetStage1Misses").addEventListener("click", resetStage1MissRecords);
-    $("stage2ToStage1").addEventListener("click", () => startStage1());
+    $("stage2ToStage1").addEventListener("click", () => startStage1("slow", state.stage2LimitIds, state.stage2ScopeLabel));
     $("stage2RestartAllTop").addEventListener("click", restartStage2All);
     $("stage2WeakOnly").addEventListener("click", restartStage2WeakOnly);
     $("stage2TroubleChunks").addEventListener("click", startSpellingTroubleReview);
     $("resetStage2Misses").addEventListener("click", resetStage2MissRecords);
-    $("stage2ToStage3").addEventListener("click", () => startStage3());
-    $("stage3ToStage2").addEventListener("click", () => startStage2(null, false));
-    $("stage3ToStage1").addEventListener("click", () => startStage1());
+    $("stage2ToStage3").addEventListener("click", () => startStage3(state.stage2LimitIds, state.stage2ScopeLabel));
+    $("stage3ToStage2").addEventListener("click", () => startStage2(state.stage3LimitIds, false, null, state.stage3ScopeLabel));
+    $("stage3ToStage1").addEventListener("click", () => startStage1("slow", state.stage3LimitIds, state.stage3ScopeLabel));
     $("stage3RestartAllTop").addEventListener("click", restartStage3All);
     $("resetStage3Misses").addEventListener("click", resetStage3WrongRecords);
     $("dayPreset").addEventListener("change", () => {
@@ -2973,7 +3896,8 @@
     document.querySelectorAll(".homeBtn").forEach((button) => button.addEventListener("click", renderHome));
 
     loadData();
-    renderHome();
+    if (state.activeStudent) renderHome();
+    else renderStudentScreen();
   </script>
 </body>
 </html>
